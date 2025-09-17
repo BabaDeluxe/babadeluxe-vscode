@@ -1,0 +1,17 @@
+{
+    "extends": "@sindresorhus/tsconfig",
+    "compilerOptions": {
+        "module": "node16",
+        "outDir": "./dist",
+        "sourceMap": true,
+        "esModuleInterop": true,
+        "erasableSyntaxOnly": false,
+        "strictNullChecks": true,
+        "noErrorTruncation": true,
+        "noEmit": false,
+        "composite": true
+    },
+    "include": [
+        "./src/**/*"
+    ]
+}

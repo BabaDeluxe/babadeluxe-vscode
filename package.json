@@ -1,0 +1,80 @@
+{
+  "name": "@babadeluxe/vscode",
+  "displayName": "BabaDeluxe AI Coder",
+  "description": "Ultimate AI coding assistant",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.104.0",
+    "node": ">=20.19.0",
+    "npm": ">=10.8.0"
+  },
+  "type": "module",
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "exports": {
+    ".": {
+      "types": "./dist/extension.d.ts",
+      "import": "./dist/extension.js",
+      "node": "./dist/extension.js",
+      "require": "./dist/extension.js",
+      "default": "./dist/extension.js"
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "babadeluxe-ai-coder.openChat",
+        "title": "Open Chat",
+        "category": "BabaDeluxe AI Coder"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "babadeluxe-ai-coder",
+          "title": "Baba Deluxe AI Coder",
+          "icon": "$(code)"
+        }
+      ]
+    },
+    "views": {
+      "babadeluxe-ai-coder": [
+        {
+          "id": "babadeluxe-ai-coder-panel",
+          "name": "AI Assistant",
+          "type": "webview",
+          "icon": "$(code)"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "format": "xo --fix --prettier",
+    "compile": "vite",
+    "build": "vite build",
+    "watch": "vite build --watch",
+    "package": "vite build --mode production",
+    "pretest": "npm run compile && npm run format",
+    "publish-patch": "npm run build && npm version patch && npm publish",
+    "publish-minor": "npm run build && npm version minor && npm publish",
+    "publish-major": "npm run build && npm version major && npm publish",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@babadeluxe/shared": "^0.1.7",
+    "@babadeluxe/xo-config": "^0.1.26",
+    "@sindresorhus/tsconfig": "^8.0.1",
+    "@types/node": "22.x",
+    "@types/vscode": "^1.104.0",
+    "husky": "^9.1.7",
+    "typescript": "^5.9.2",
+    "vite": "^7.1.5",
+    "xo": "^1.2.2"
+  },
+  "dependencies": {
+    "combine-async-iterators": "^3.0.0"
+  }
+}

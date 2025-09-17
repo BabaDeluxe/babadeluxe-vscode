@@ -1,0 +1,28 @@
+#!/usr/bin/env sh
+
+# Store the original commit message
+COMMIT_MSG_FILE="$GIT_DIR/COMMIT_EDITMSG"
+if [ -f "$COMMIT_MSG_FILE" ]; then
+  COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
+else
+  COMMIT_MSG=""
+fi
+
+# TEST_FILES=$(find . -name '*.test.ts' -o -name '*.spec.ts' | wc -l)
+
+# if [ "$TEST_FILES" -gt 0 ]; then
+#   npm run test || exit 1
+# fi
+
+# Format JavaScript code
+npm run format
+
+# Stage any changes made by formatting
+if ! git diff --quiet; then
+  git add -u
+
+  # Reapply the original commit message to the new staged changes
+  if [ -n "$COMMIT_MSG" ]; then
+    echo "$COMMIT_MSG" > "$COMMIT_MSG_FILE"
+  fi
+fi
