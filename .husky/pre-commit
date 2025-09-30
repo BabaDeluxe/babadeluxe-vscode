@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/bin/bash
 
 # Store the original commit message
 COMMIT_MSG_FILE="$GIT_DIR/COMMIT_EDITMSG"
@@ -8,20 +8,17 @@ else
   COMMIT_MSG=""
 fi
 
-# TEST_FILES=$(find . -name '*.test.ts' -o -name '*.spec.ts' | wc -l)
-
-# if [ "$TEST_FILES" -gt 0 ]; then
-#   npm run test || exit 1
-# fi
+# Capture the list of originally staged files
+STAGED_FILES=$(git diff --cached --name-only)
 
 # Format JavaScript code
 npm run format
 
-# Stage any changes made by formatting
-if ! git diff --quiet; then
-  git add -u
+# Only re-stage the files that were originally staged (if they were modified by formatting)
+if [ -n "$STAGED_FILES" ]; then
+  echo "$STAGED_FILES" | xargs git add
 
-  # Reapply the original commit message to the new staged changes
+  # Reapply the original commit message
   if [ -n "$COMMIT_MSG" ]; then
     echo "$COMMIT_MSG" > "$COMMIT_MSG_FILE"
   fi

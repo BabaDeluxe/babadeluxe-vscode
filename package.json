@@ -64,7 +64,6 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@babadeluxe/shared": "^0.1.7",
     "@babadeluxe/xo-config": "^0.1.26",
     "@sindresorhus/tsconfig": "^8.0.1",
     "@types/node": "22.x",
@@ -75,6 +74,7 @@
     "xo": "^1.2.2"
   },
   "dependencies": {
+    "@babadeluxe/shared": "^0.1.18",
     "combine-async-iterators": "^3.0.0"
   }
 }
