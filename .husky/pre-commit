@@ -9,7 +9,7 @@ else
 fi
 
 # Capture the list of originally staged files
-STAGED_FILES=$(git diff --cached --name-only)
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
 
 # Format JavaScript code
 npm run format
