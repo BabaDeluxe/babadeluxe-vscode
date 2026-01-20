@@ -2,6 +2,8 @@
   "name": "@babadeluxe/vscode",
   "displayName": "BabaDeluxe AI Coder",
   "description": "Ultimate AI coding assistant",
+  "publisher": "babadeluxe",
+  "extensionId": "babadeluxe.babadeluxe-vscode",
   "version": "0.1.0",
   "engines": {
     "vscode": "^1.104.0",

@@ -4,8 +4,6 @@
     "./vite.config.ts",
     "./vitest.config.ts",
     "./*.ts"
-    // "build/**/*",
-    // "scripts/**/*"
   ],
   "compilerOptions": {
     "rootDir": ".",
