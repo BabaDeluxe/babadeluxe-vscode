@@ -2,36 +2,27 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vite'
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
-const __dirname = path.dirname(fileURLToPath(import.meta.url))
+// @ts-ignore
+const _dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export default defineConfig({
   build: {
-    target: 'node16',
+    target: 'node20',
     lib: {
-      entry: path.resolve(__dirname, 'src/extension.ts'),
+      entry: path.resolve(_dirname, 'src/extension.ts'),
       formats: ['es'],
       fileName: () => 'extension.js',
     },
-    outDir: path.resolve(__dirname, 'dist'),
+    outDir: path.resolve(_dirname, 'dist'),
     rollupOptions: {
-      external: [
-        'vscode', // VS Code API
-        /^node:/, // All node: prefixed modules
-      ],
-      output: {
-        format: 'cjs',
-      },
+      external: ['vscode', /^node:.*/, '@joshua.litt/get-ripgrep'],
+      treeshake: true,
     },
-    emptyOutDir: false,
+    sourcemap: true,
     minify: false,
+    emptyOutDir: true,
   },
 
-  resolve: {
-    extensions: ['.ts', '.js'],
-  },
-
-  // THIS IS KEY - tell Vite we're building for Node.js, not browser
   ssr: {
     target: 'node',
   },

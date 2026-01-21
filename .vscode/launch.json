@@ -1,28 +1,20 @@
 {
-	"version": "0.2.0",
-	"configurations": [
-		{
-			"name": "Build + Debug",
-			"type": "extensionHost",
-			"request": "launch",
-			"preLaunchTask": "npm: full-build",
-			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}"
-			],
-			"outFiles": [
-				"${workspaceFolder}/dist/**/*"
-			]
-		},
-		{
-			"name": "Debug",
-			"type": "extensionHost",
-			"request": "launch",
-			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}"
-			],
-			"outFiles": [
-				"${workspaceFolder}/dist/**/*"
-			]
-		}
-	]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Build + Debug",
+      "type": "extensionHost",
+      "request": "launch",
+      "preLaunchTask": "npm: build:full",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "outFiles": ["${workspaceFolder}/dist/**/*"]
+    },
+    {
+      "name": "Debug",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "outFiles": ["${workspaceFolder}/dist/**/*"]
+    }
+  ]
 }
