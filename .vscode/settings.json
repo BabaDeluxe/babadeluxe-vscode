@@ -1,7 +1,7 @@
 {
     "typescript.tsc.autoDetect": "off",
     "typescript.tsdk": "node_modules/typescript/lib",
-    "typescript.tsserver.experimental.enableProjectDiagnostics": true,
+    "typescript.tsserver.experimental.enableProjectDiagnostics": false,
     "search.quickOpen.includeHistory": true,
     "search.exclude": {
         "/node_modules": true,
@@ -16,31 +16,35 @@
     "xo.format.enable": true,
     "eslint.enable": false,
     "eslint.format.enable": false,
+    "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
         "source.fixAll": "always",
         "source.fixAll.xo": "always"
     },
-    "editor.formatOnSave": false,
     "[javascript]": {
-        "editor.defaultFormatter": "samverschueren.linter-xo"
+        "editor.defaultFormatter": "samverschueren.linter-xo",
+        "editor.formatOnSave": false,
     },
     "[typescript]": {
-        "editor.defaultFormatter": "samverschueren.linter-xo"
+        "editor.defaultFormatter": "samverschueren.linter-xo",
+        "editor.formatOnSave": false,
     },
     "[javascriptreact]": {
-        "editor.defaultFormatter": "samverschueren.linter-xo"
+        "editor.defaultFormatter": "samverschueren.linter-xo",
+        "editor.formatOnSave": false,
     },
     "[typescriptreact]": {
-        "editor.defaultFormatter": "samverschueren.linter-xo"
+        "editor.defaultFormatter": "samverschueren.linter-xo",
+        "editor.formatOnSave": false,
     },
     "[json]": {
-        "editor.defaultFormatter": "vscode.json-language-features"
+        "editor.defaultFormatter": "vscode.json-language-features",
     },
     "[jsonc]": {
         "editor.quickSuggestions": {
             "strings": true
         },
         "editor.suggest.insertMode": "replace",
-        "editor.defaultFormatter": "vscode.json-language-features"
+        "editor.defaultFormatter": "vscode.json-language-features",
     }
 }
