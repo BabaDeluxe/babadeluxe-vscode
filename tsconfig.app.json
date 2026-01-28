@@ -1,17 +1,25 @@
 {
-    "extends": "@sindresorhus/tsconfig",
-    "compilerOptions": {
-        "module": "node16",
-        "outDir": "./dist",
-        "sourceMap": true,
-        "esModuleInterop": true,
-        "erasableSyntaxOnly": false,
-        "strictNullChecks": true,
-        "noErrorTruncation": true,
-        "noEmit": false,
-        "composite": true
-    },
-    "include": [
-        "./src/**/*"
-    ]
+  "extends": "@sindresorhus/tsconfig",
+  "compilerOptions": {
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "target": "ES2022",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "sourceMap": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noEmit": false,
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true,
+    "resolveJsonModule": true,
+    "erasableSyntaxOnly": false,
+    "incremental": true,
+    "isolatedModules": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "**/*.test.ts", "**/*.spec.ts"]
 }

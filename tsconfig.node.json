@@ -1,17 +1,24 @@
 {
   "extends": "@sindresorhus/tsconfig",
   "include": [
+    "./src/**/*.ts",
     "./vite.config.ts",
     "./vitest.config.ts",
-    "./*.ts"
+    "./xo.config.ts",
+    "./*.ts",
+    "./tests/**/*.ts"
   ],
   "compilerOptions": {
     "rootDir": ".",
     "noEmit": true,
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
-    "types": [
-      "node"
-    ],
-    "composite": true
+    "erasableSyntaxOnly": false,
+    "esModuleInterop": true,
+    "strict": true,
+    "composite": true,
+    "incremental": true,
+    "skipLibCheck": true
   }
 }
