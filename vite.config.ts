@@ -15,8 +15,11 @@ export default defineConfig({
     },
     outDir: path.resolve(_dirname, 'dist'),
     rollupOptions: {
-      external: ['vscode', /^node:.*/, '@joshua.litt/get-ripgrep'],
+      external: ['vscode', /^node:.*/, '@vscode-ripgrep'],
       treeshake: true,
+      output: {
+        format: 'cjs',
+      },
     },
     sourcemap: true,
     minify: false,
