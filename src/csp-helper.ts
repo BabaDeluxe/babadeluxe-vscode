@@ -1,50 +1,57 @@
+import { Buffer } from 'node:buffer'
+import { randomBytes } from 'node:crypto'
 import * as vscode from 'vscode'
-import { readFile } from './fs-helper.js'
-
-export function createCspMeta(webview: vscode.Webview): string {
-  const csp = [
-    "default-src 'none'",
-    `script-src ${webview.cspSource}`,
-    `style-src ${webview.cspSource} 'unsafe-inline' https://fonts.googleapis.com`,
-    `img-src ${webview.cspSource} https: data:`,
-    `font-src ${webview.cspSource} https://fonts.gstatic.com`,
-    `connect-src ${webview.cspSource} https: wss: ws:`,
-  ].join('; ')
-  return `<meta http-equiv="Content-Security-Policy" content="${csp}">`
-}
-
-export function replaceAssetPathsInHtml(
-  html: string,
-  webview: vscode.Webview,
-  baseUri: vscode.Uri,
-  assetFolder = 'dist/webview'
-): string {
-  const result = html.replaceAll(
-    /(src|href)=["']\.\/([^"']+)["']/g,
-    (_match, attr, relativePath: string) => {
-      const assetUri = webview.asWebviewUri(vscode.Uri.joinPath(baseUri, assetFolder, relativePath))
-      return ` ${attr}="${assetUri.toString()}"`
-    }
-  )
-
-  return result
-}
 
 export async function loadAndProcessHtml(
   extensionUri: vscode.Uri,
-  webview: vscode.Webview,
-  assetFolder = 'dist/webview'
+  webview: vscode.Webview
 ): Promise<string> {
-  const htmlPath = vscode.Uri.joinPath(extensionUri, assetFolder, 'index.html')
-  let html = await readFile(htmlPath.fsPath)
+  const htmlUri = vscode.Uri.joinPath(extensionUri, 'dist/webview/index.html')
+  const htmlBytes = await vscode.workspace.fs.readFile(htmlUri)
+  let html = Buffer.from(htmlBytes).toString('utf8')
 
-  html = html.replaceAll(/<meta[^>]*content-security-policy[^>]*>/gi, '')
+  const nonce = randomBytes(16).toString('base64')
+  html = html.replaceAll(
+    /(src|href)=["']\.\/(assets\/[^"']+)["']/g,
+    (_match, attr, relativePath: string) => {
+      const assetUri = webview.asWebviewUri(
+        vscode.Uri.joinPath(extensionUri, 'dist/webview', relativePath)
+      )
+      return `${attr}="${assetUri.toString()}"`
+    }
+  )
+  html = html.replaceAll(
+    /(src|href)=["']\/(assets\/[^"']+)["']/g,
+    (_match, attr, relativePath: string) => {
+      const assetUri = webview.asWebviewUri(
+        vscode.Uri.joinPath(extensionUri, 'dist/webview', relativePath)
+      )
+      return `${attr}="${assetUri.toString()}"`
+    }
+  )
 
-  const ourCsp = createCspMeta(webview)
+  const cspContent = [
+    "default-src 'none'",
+    `script-src ${webview.cspSource} 'nonce-${nonce}' 'wasm-unsafe-eval'`,
+    `style-src ${webview.cspSource} 'nonce-${nonce}' 'unsafe-inline' https://fonts.googleapis.com`,
+    `img-src ${webview.cspSource} https: data:`,
+    `font-src ${webview.cspSource} https://fonts.gstatic.com`,
+    `connect-src ${webview.cspSource} https: wss: ws:`,
+    `worker-src ${webview.cspSource} blob:`,
+  ].join('; ')
 
-  html = html.replace('<head>', `<head>\n    ${ourCsp}`)
+  html = html.includes('<meta http-equiv="Content-Security-Policy"')
+    ? html.replace(
+        /<meta http-equiv="Content-Security-Policy"[^>]*>/,
+        `<meta http-equiv="Content-Security-Policy" content="${cspContent}">`
+      )
+    : html.replace(
+        '<head>',
+        `<head>\n<meta http-equiv="Content-Security-Policy" content="${cspContent}">`
+      )
 
-  html = replaceAssetPathsInHtml(html, webview, extensionUri, assetFolder)
+  html = html.replaceAll('<style', `<style nonce="${nonce}"`)
+  html = html.replaceAll('<script', `<script nonce="${nonce}"`)
 
   return html
 }

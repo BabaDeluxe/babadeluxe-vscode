@@ -1,5 +1,5 @@
 {
-  "name": "@babadeluxe/vscode",
+  "name": "babadeluxe-vscode",
   "displayName": "BabaDeluxe AI Coder",
   "description": "Ultimate AI coding assistant",
   "publisher": "babadeluxe",
@@ -10,73 +10,186 @@
     "node": ">=20.19.0",
     "npm": ">=10.8.0"
   },
-  "type": "module",
   "categories": [
     "Other"
   ],
-  "activationEvents": [],
+  "type": "module",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "main": "./dist/extension.js",
-  "exports": {
-    ".": {
-      "types": "./dist/extension.d.ts",
-      "import": "./dist/extension.js",
-      "node": "./dist/extension.js",
-      "require": "./dist/extension.js",
-      "default": "./dist/extension.js"
-    }
-  },
   "contributes": {
     "commands": [
       {
-        "command": "babadeluxe-ai-coder.openChat",
-        "title": "Open Chat",
-        "category": "BabaDeluxe AI Coder"
+        "command": "babadeluxe-ai-coder.showChat",
+        "title": "BabaDeluxe: Show Chat",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "babadeluxe-ai-coder.setContextRoot",
+        "title": "BabaDeluxe: Set Context Root Folder",
+        "icon": "$(folder-opened)"
+      },
+      {
+        "command": "babadeluxe-ai-coder.clearContextRoot",
+        "title": "BabaDeluxe: Clear Context Root Folder",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "babadeluxe-ai-coder.openSettings",
+        "title": "BabaDeluxe: Open Settings",
+        "icon": "$(gear)"
+      },
+      {
+        "command": "babadeluxe-ai-coder.context.addSelectionToBabaContext",
+        "title": "Add Code to BabaContext™"
+      },
+      {
+        "command": "babadeluxe-ai-coder.context.addFileToBabaContext",
+        "title": "Add File to BabaContext™"
+      },
+      {
+        "command": "babadeluxe-ai-coder.context.addFolderToBabaContext",
+        "title": "Add Folder to BabaContext™"
       }
     ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "babadeluxe-ai-coder.openSettings",
+          "when": "view == babadeluxe-ai-coder-panel",
+          "group": "navigation@10"
+        },
+        {
+          "command": "babadeluxe-ai-coder.setContextRoot",
+          "when": "view == babadeluxe-ai-coder-panel",
+          "group": "navigation@20"
+        },
+        {
+          "command": "babadeluxe-ai-coder.clearContextRoot",
+          "when": "view == babadeluxe-ai-coder-panel",
+          "group": "navigation@30"
+        }
+      ],
+      "editor/context": [
+        {
+          "command": "babadeluxe-ai-coder.context.addSelectionToBabaContext",
+          "when": "editorHasSelection",
+          "group": "navigation@50"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "babadeluxe-ai-coder.context.addFileToBabaContext",
+          "when": "!explorerResourceIsFolder",
+          "group": "navigation@50"
+        },
+        {
+          "command": "babadeluxe-ai-coder.context.addFolderToBabaContext",
+          "when": "explorerResourceIsFolder",
+          "group": "navigation@50"
+        }
+      ]
+    },
     "viewsContainers": {
       "activitybar": [
         {
           "id": "babadeluxe-ai-coder",
-          "title": "Baba Deluxe AI Coder",
-          "icon": "$(code)"
+          "title": "BabaDeluxe AI Coder",
+          "icon": "$(comment-discussion)"
         }
       ]
     },
     "views": {
       "babadeluxe-ai-coder": [
         {
-          "id": "babadeluxe-ai-coder-panel",
-          "name": "AI Assistant",
           "type": "webview",
-          "icon": "$(code)"
+          "id": "babadeluxe-ai-coder-panel",
+          "name": "Chat"
         }
       ]
+    },
+    "configuration": {
+      "title": "BabaDeluxe AI Coder",
+      "properties": {
+        "babadeluxe-ai-coder.contextRoot": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null,
+          "description": "Folder used as the context root for BabaDeluxe context search.",
+          "scope": "resource"
+        }
+      }
     }
   },
   "scripts": {
-    "format": "xo --fix --prettier",
-    "compile": "vite",
+    "vscode:prepublish": "npm run build",
+    "compile": "tsc -p tsconfig.app.json --noEmit && vite build",
     "build": "vite build",
+    "build:full": "pwsh ..\\build-vscode-extension.ps1",
     "watch": "vite build --watch",
-    "package": "vite build --mode production",
-    "pretest": "npm run compile && npm run format",
-    "publish-patch": "npm run build && npm version patch && npm publish",
-    "publish-minor": "npm run build && npm version minor && npm publish",
-    "publish-major": "npm run build && npm version major && npm publish",
-    "prepare": "husky"
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:watch": "vitest watch",
+    "format": "xo --fix --prettier",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "package": "vsce package --no-dependencies",
+    "prepare": "husky",
+    "copy:webview": "rm -rf dist/webview && mkdir -p dist/webview && cp -r ../babadeluxe-webview/dist/* dist/webview/"
   },
   "devDependencies": {
-    "@babadeluxe/xo-config": "^0.1.26",
+    "@babadeluxe/xo-config": "^0.3.2",
     "@sindresorhus/tsconfig": "^8.0.1",
-    "@types/node": "22.x",
+    "@types/node": "^22.10.5",
+    "@types/stopword": "^2.0.3",
     "@types/vscode": "^1.104.0",
+    "@typescript-eslint/eslint-plugin": "^8.43.0",
+    "@typescript-eslint/parser": "^8.43.0",
+    "@vitest/ui": "^2.1.9",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.7.1",
+    "baseline-browser-mapping": "latest",
     "husky": "^9.1.7",
+    "jest-mock-vscode": "^4.8.2",
     "typescript": "^5.9.2",
     "vite": "^7.1.5",
+    "vitest": "^2.1.9",
     "xo": "^1.2.2"
   },
   "dependencies": {
-    "@babadeluxe/shared": "^0.1.18",
-    "combine-async-iterators": "^3.0.0"
-  }
+    "@babadeluxe/shared": "^0.18.0",
+    "@supabase/supabase-js": "^2.91.0",
+    "@vscode/ripgrep": "^1.17.0",
+    "colorino": "^0.19.3",
+    "combine-async-iterators": "^3.0.0",
+    "ignore": "^7.0.5",
+    "neverthrow": "^8.2.0",
+    "p-queue": "^9.1.0",
+    "stopword": "^3.1.5",
+    "wink-bm25-text-search": "^3.1.2"
+  },
+  "bundledDependencies": [
+    "@babadeluxe/shared",
+    "@supabase/supabase-js",
+    "colorino",
+    "combine-async-iterators",
+    "neverthrow",
+    "p-queue",
+    "stopword",
+    "wink-bm25-text-search",
+    "@vscode/ripgrep"
+  ],
+  "bundleDependencies": [
+    "@babadeluxe/shared",
+    "@supabase/supabase-js",
+    "colorino",
+    "combine-async-iterators",
+    "neverthrow",
+    "p-queue",
+    "stopword",
+    "wink-bm25-text-search",
+    "@vscode/ripgrep"
+  ]
 }
