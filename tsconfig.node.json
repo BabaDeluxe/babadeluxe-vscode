@@ -6,19 +6,26 @@
     "./vitest.config.ts",
     "./xo.config.ts",
     "./*.ts",
-    "./tests/**/*.ts"
+    "./scripts/*.ts",
+    "./tests/**/*.ts",
   ],
   "compilerOptions": {
     "rootDir": ".",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
     "noEmit": true,
-    "module": "nodenext",
-    "moduleResolution": "nodenext",
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
     "erasableSyntaxOnly": false,
     "esModuleInterop": true,
     "strict": true,
     "composite": true,
     "incremental": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "baseUrl": ".",
+    "paths": {
+      "*": [
+        "*"
+      ]
+    }
   }
 }

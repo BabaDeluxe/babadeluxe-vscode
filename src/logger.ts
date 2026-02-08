@@ -3,15 +3,21 @@ import { inspect } from 'node:util'
 import * as vscode from 'vscode'
 import { createColorino, themePalettes } from 'colorino'
 
-/**
- * Type inferred from the factory return type.
- * This ensures we stay synced with the library's API without maintaining manual interfaces.
- */
 type ColorinoLogger = ReturnType<typeof createColorino>
-
 type ColorinoLogLevel = keyof Omit<Omit<ColorinoLogger, 'gradient'>, 'colorize'>
 
-export class Logger {
+type LogMetadata = Readonly<{
+  colorinoLevel: ColorinoLogLevel
+  levelLabel: string
+}>
+
+type OutputFormatData = Readonly<{
+  timestamp: string
+  level: string
+  context: string
+}>
+
+class Logger {
   private readonly _output: vscode.OutputChannel
   private readonly _logger: ColorinoLogger
 
@@ -20,69 +26,62 @@ export class Logger {
     this._logger = createColorino(themePalettes['catppuccin-mocha'])
   }
 
-  // Backwards compatible with your existing API.
   public log(message: string, ...args: unknown[]): void {
-    this.info(message, ...args)
+    this._log({ colorinoLevel: 'info', levelLabel: 'INFO' }, message, args)
   }
 
   public info(message: string, ...args: unknown[]): void {
-    this._log('info', 'INFO', message, args)
+    this._log({ colorinoLevel: 'info', levelLabel: 'INFO' }, message, args)
   }
 
   public debug(message: string, ...args: unknown[]): void {
-    this._log('debug', 'DEBUG', message, args)
+    this._log({ colorinoLevel: 'debug', levelLabel: 'DEBUG' }, message, args)
   }
 
   public warn(message: string, ...args: unknown[]): void {
-    this._log('warn', 'WARN', message, args)
+    this._log({ colorinoLevel: 'warn', levelLabel: 'WARN' }, message, args)
   }
 
   public trace(message: string, ...args: unknown[]): void {
-    this._log('trace', 'TRACE', message, args)
+    this._log({ colorinoLevel: 'trace', levelLabel: 'TRACE' }, message, args)
   }
 
   public error(message: string, error?: Error | unknown, ...args: unknown[]): void {
     const combinedArgs = error === undefined ? args : [error, ...args]
-    this._log('error', 'ERROR', message, combinedArgs)
+    this._log({ colorinoLevel: 'error', levelLabel: 'ERROR' }, message, combinedArgs)
   }
 
   public show(): void {
     this._output.show()
   }
 
-  private _log(
-    level: ColorinoLogLevel,
-    levelLabel: string,
-    message: string,
-    args: unknown[]
-  ): void {
+  private _log(metadata: LogMetadata, message: string, args: unknown[]): void {
     const timestamp = new Date().toISOString()
     const context = this._getCallerContext()
 
-    // OutputChannel: keep it plain text (no ANSI color codes).
     this._output.appendLine(
-      this._formatForOutputChannel(timestamp, levelLabel, context, message, args)
+      this._formatForOutputChannel(
+        { timestamp, level: metadata.levelLabel, context },
+        message,
+        args
+      )
     )
 
-    // Console: Colorino handles coloring by level.
     if (args.length === 0) {
-      this._logger[level](`[${context}]`, message)
+      this._logger[metadata.colorinoLevel](`[${context}]`, message)
       return
     }
 
-    this._logger[level](`[${context}]`, message, ...args)
+    this._logger[metadata.colorinoLevel](`[${context}]`, message, ...args)
   }
 
-  // eslint-disable-next-line
   private _formatForOutputChannel(
-    timestamp: string,
-    level: string,
-    context: string,
+    data: OutputFormatData,
     message: string,
-    args: unknown[]
+    args?: unknown[]
   ): string {
-    if (args.length === 0) {
-      return `[${timestamp}] [${level}] [${context}] ${message}`
+    if (!args || args.length === 0) {
+      return `[${data.timestamp}] [${data.level}] [${data.context}] ${message}`
     }
 
     const argsText = inspect(args, {
@@ -92,33 +91,28 @@ export class Logger {
       breakLength: 140,
     })
 
-    return `[${timestamp}] [${level}] [${context}] ${message} ${argsText}`
+    return `[${data.timestamp}] [${data.level}] [${data.context}] ${message} ${argsText}`
   }
 
-  /**
-   * Introspects the V8 Call Stack to find the file name of the caller.
-   *
-   * Stack Index Logic (matches the example's structure):
-   * [0]: _getCallerContext
-   * [1]: _log
-   * [2]: the public logger method (info/warn/error/...)
-   * [3]: the consumer calling the logger <--- Target
-   */
   private _getCallerContext(): string {
     const originalPrepareStackTrace = Error.prepareStackTrace
 
     try {
       Error.prepareStackTrace = (_, stack) => stack
 
+      // Adjusted stack index:
+      // 0: Error creation
+      // 1: _getCallerContext
+      // 2: _log
+      // 3: public log method (e.g., info/debug)
+      // 4: The actual caller
       const stack = new Error('Stack trace for caller detection')
         .stack as unknown as NodeJS.CallSite[]
 
-      const caller = stack[3]
+      const caller = stack[4]
       const fileName = caller?.getFileName()
 
-      if (!fileName) {
-        return 'unknown'
-      }
+      if (!fileName) return 'unknown'
 
       return path.basename(fileName, path.extname(fileName))
     } finally {
