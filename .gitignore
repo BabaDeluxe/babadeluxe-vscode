@@ -8,8 +8,6 @@ dist-ssr/
 coverage/
 logs/
 
-shared-docs/
-
 *.log
 .DS_Store
 .idea
