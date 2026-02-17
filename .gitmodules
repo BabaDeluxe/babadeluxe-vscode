@@ -1,3 +1,6 @@
 [submodule "shared-docs"]
 	path = shared-docs
 	url = https://github.com/simwai/babadeluxe-docs
+[submodule "babadeluxe-docs"]
+	path = babadeluxe-docs
+	url = https://github.com/simwai/babadeluxe-docs
