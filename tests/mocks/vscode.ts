@@ -1,31 +1,31 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
-import { createVSCodeMock } from 'jest-mock-vscode'
+/* eslint-disable @typescript-eslint/naming-convention */
 import { vi } from 'vitest'
 
-const baseMock = createVSCodeMock(vi) as any
-
 const vscode = {
-  ...baseMock,
   workspace: {
-    ...baseMock.workspace,
-    onDidSaveTextDocument: vi.fn(() => ({
-      dispose: vi.fn(),
-    })),
+    onDidChangeTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
+    onDidSaveTextDocument: vi.fn(() => ({ dispose: vi.fn() })),
     fs: {
       readFile: vi.fn(),
     },
   },
+  window: {
+    activeTextEditor: undefined,
+    visibleTextEditors: [],
+  },
+  extensions: {
+    getExtension: vi.fn().mockReturnValue(undefined),
+  },
   env: {
-    ...baseMock.env,
     asExternalUri: vi.fn(async (uri: unknown) => uri),
   },
-  // eslint-disable-next-line @typescript-eslint/naming-convention
   Uri: {
     file: (path: string) => ({ fsPath: path }),
-    ...baseMock.Uri,
+  },
+  commands: {
+    executeCommand: vi.fn(),
   },
 }
 
 export default vscode
-// eslint-disable-next-line @typescript-eslint/naming-convention
-export const { workspace, window, Uri, commands, env } = vscode
+export const { workspace, window, Uri, commands, env, extensions } = vscode

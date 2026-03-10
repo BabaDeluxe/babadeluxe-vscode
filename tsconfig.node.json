@@ -8,6 +8,7 @@
     "./*.ts",
     "./scripts/*.ts",
     "./tests/**/*.ts",
+    "./typings",
   ],
   "compilerOptions": {
     "rootDir": ".",
@@ -20,11 +21,16 @@
     "strict": true,
     "composite": true,
     "incremental": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "*": [
-        "*"
+      "reactive-vscode": [
+        "node_modules/reactive-vscode/dist/index.d.ts"
+      ],
+      "vitest": [
+        "node_modules/vitest/dist/index.d.ts"
       ]
     }
   }
