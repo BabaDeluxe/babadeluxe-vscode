@@ -57,7 +57,10 @@ export class WebviewPinsController {
   private _webview?: vscode.Webview
   private _isReady = false
 
-  public constructor(private readonly _pinsStore: ContextPinsStore) {}
+  public constructor(
+    private readonly _pinsStore: ContextPinsStore,
+    private readonly _getCanonicalRootKey: () => string
+  ) {}
 
   public attach(webview: vscode.Webview): void {
     this._webview = webview
@@ -69,15 +72,21 @@ export class WebviewPinsController {
     this._isReady = false
   }
 
+  public async refreshSnapshot(): Promise<void> {
+    await this._maybePostSnapshot()
+  }
+
   public async persistPinFromCommand(message: unknown): Promise<PostStatus> {
+    const rootKey = this._getCanonicalRootKey()
+
     if (isPinFileMessage(message)) {
-      await this._pinsStore.upsertFilePin(message.filePath)
+      await this._pinsStore.upsertFilePin(rootKey, message.filePath)
       await this._maybePostSnapshot()
       return this._webview && this._isReady ? { kind: 'posted' } : { kind: 'queued' }
     }
 
     if (isPinSnippetMessage(message)) {
-      await this._pinsStore.upsertSnippetPin({
+      await this._pinsStore.upsertSnippetPin(rootKey, {
         id: message.id,
         filePath: message.filePath,
         snippet: message.snippet,
@@ -94,6 +103,8 @@ export class WebviewPinsController {
   }
 
   public async handleWebviewMessage(message: WebviewMessage): Promise<boolean> {
+    const rootKey = this._getCanonicalRootKey()
+
     if (isSidebarReadyMessage(message)) {
       this._isReady = true
       await this._maybePostSnapshot()
@@ -101,13 +112,13 @@ export class WebviewPinsController {
     }
 
     if (isContextUnpinFileMessage(message)) {
-      await this._pinsStore.unpinByFilePath(message.filePath)
+      await this._pinsStore.unpinByFilePath(rootKey, message.filePath)
       await this._maybePostSnapshot()
       return true
     }
 
     if (isContextClearAllMessage(message)) {
-      await this._pinsStore.clear()
+      await this._pinsStore.clear(rootKey)
       await this._maybePostSnapshot()
       return true
     }
@@ -117,7 +128,11 @@ export class WebviewPinsController {
 
   private async _maybePostSnapshot(): Promise<void> {
     if (!this._webview || !this._isReady) return
-    const snapshot: ContextSnapshotMessage = this._pinsStore.readSnapshot()
+
+    const rootKey = this._getCanonicalRootKey()
+    await this._pinsStore.migrateLegacyToRoot()
+
+    const snapshot: ContextSnapshotMessage = this._pinsStore.readSnapshot(rootKey)
     await this._webview.postMessage(snapshot)
   }
 }

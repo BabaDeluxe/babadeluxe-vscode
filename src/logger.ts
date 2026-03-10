@@ -17,7 +17,9 @@ type OutputFormatData = Readonly<{
   context: string
 }>
 
-class Logger {
+type LoggerMethod = (contextTag: string, message: string, ...args: any[]) => void
+
+export class Logger {
   private readonly _output: vscode.OutputChannel
   private readonly _logger: ColorinoLogger
 
@@ -72,7 +74,7 @@ class Logger {
       return
     }
 
-    this._logger[metadata.colorinoLevel](`[${context}]`, message, ...args)
+    ;(this._logger[metadata.colorinoLevel] as LoggerMethod)(`[${context}]`, message, ...args)
   }
 
   private _formatForOutputChannel(

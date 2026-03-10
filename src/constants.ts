@@ -11,7 +11,7 @@ export const ignoredDirectories = [
   '.vscode',
 ] as const
 
-export const ignoredFiles = [
+export const ignoredFilePatterns = [
   '*.d.ts',
   '*.min.*',
   '*-lock.*',
@@ -21,8 +21,9 @@ export const ignoredFiles = [
 
 export const ignoreGlobs = [
   ...ignoredDirectories.map((directoryName) => `!**/${directoryName}/**`),
-  ...ignoredFiles.map((fileName) => `!**/${fileName}`),
+  ...ignoredFilePatterns.map((fileName) => `!**/${fileName}`),
 ] as const
+
 export const extraStopwords = new Set([
   'where',
   'did',
@@ -39,24 +40,7 @@ export const extraStopwords = new Set([
   'finde',
   'suche',
 ])
+
 export const shortTokenAllowlist = new Set(['rg', 'ci', 'id', 'ts', 'js', 'py', 'cs'])
 
-export const indexableFileExtensions = [
-  '.ts',
-  '.tsx',
-  '.js',
-  '.jsx',
-  '.mjs',
-  '.cjs',
-  '.json',
-  '.jsonc',
-  '.md',
-  '.txt',
-  '.yml',
-  '.yaml',
-  '.py',
-  '.cs',
-  '.html',
-  '.css',
-  '.scss',
-] as const
+export const maxFolderPinFiles = 500

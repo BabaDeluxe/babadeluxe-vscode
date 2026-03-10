@@ -13,6 +13,14 @@ export async function runRg(
 
     let stdout = ''
     let stderr = ''
+    let isResolved = false
+
+    const resolveOnce = (result: Result<RgRunOutput, RgSearchError>): void => {
+      if (isResolved) return
+
+      isResolved = true
+      resolve(result)
+    }
 
     rg.stdout.on('data', (chunk: Uint8Array) => {
       stdout += chunk.toString()
@@ -23,11 +31,11 @@ export async function runRg(
     })
 
     rg.on('close', (exitCode) => {
-      resolve(ok({ stdout, stderr, exitCode }))
+      resolveOnce(ok({ stdout, stderr, exitCode }))
     })
 
     rg.on('error', (error) => {
-      resolve(err(new RgSearchError('Failed to spawn ripgrep', error)))
+      resolveOnce(err(new RgSearchError('Failed to spawn ripgrep', error)))
     })
   })
 }

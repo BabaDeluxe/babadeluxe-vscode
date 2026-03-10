@@ -1,20 +1,25 @@
-import * as path from 'node:path'
-import { indexableFileExtensions } from './constants.js'
+import path from 'node:path'
 
-const indexableFileExtensionSet = new Set<string>(indexableFileExtensions)
+const ignoredFilePatterns = [
+  /\.d\.ts$/i,
+  /\.min\./i,
+  /-lock\./i,
+  /pnpm-lock\.yaml$/i,
+  /yarn\.lock$/i,
+] as const
 
-export const indexableFileIncludeGlobs: readonly string[] = indexableFileExtensions.map(
-  (extension) => `**/*${extension}`
-)
+export const indexableFileIncludeGlobs = ['**/*'] as const
 
-export const indexableFileWatcherGlob = `**/*.{${indexableFileExtensions
-  .map((extension) => extension.slice(1))
-  .join(',')}}`
+export const indexableFileWatcherGlob = '**/*'
 
 export function isIndexableFileExtension(filePath: string): boolean {
   const lowerPath = filePath.toLowerCase()
-  if (lowerPath.endsWith('.d.ts')) return false
+  for (const pattern of ignoredFilePatterns) {
+    if (pattern.test(lowerPath)) return false
+  }
 
   const extension = path.extname(lowerPath)
-  return indexableFileExtensionSet.has(extension)
+  if (!extension) return false
+
+  return true
 }

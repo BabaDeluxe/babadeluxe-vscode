@@ -1,215 +1,81 @@
-import process from 'node:process'
 import * as vscode from 'vscode'
 import { defineExtension, useCommands, useDisposable } from 'reactive-vscode'
-import { type Result, err, ok } from 'neverthrow'
-import { ChatPanelManager } from './chat-panel-manager.js'
 import { logger } from './logger.js'
-import { BabaDeluxeWebviewProvider } from './baba-deluxe-webview-provider.js'
 import { SupabaseOAuthController } from './supabase-oauth-controller.js'
-import { section, key } from './constants.js'
-import { ContextCommandError } from './errors.js'
-import type { PinFileMessage, PinSnippetMessage, TextRange } from './types.js'
-
-const makeId = (): string => `${Date.now()}-${Math.random().toString(16).slice(2)}`
-
-function getBestTarget(scopeUri?: vscode.Uri): vscode.ConfigurationTarget {
-  const hasWorkspace = Boolean(vscode.workspace.workspaceFolders?.length)
-  if (!hasWorkspace) return vscode.ConfigurationTarget.Global
-
-  const folder = scopeUri ? vscode.workspace.getWorkspaceFolder(scopeUri) : undefined
-  return folder ? vscode.ConfigurationTarget.WorkspaceFolder : vscode.ConfigurationTarget.Workspace
-}
-
-function selectionToRange(editor: vscode.TextEditor): TextRange {
-  const { selection } = editor
-
-  return {
-    startLine: selection.start.line,
-    startCharacter: selection.start.character,
-    endLine: selection.end.line,
-    endCharacter: selection.end.character,
-  }
-}
-
-function getSelectionSnippet(): Result<
-  { filePath: string; snippet: string; range: TextRange },
-  ContextCommandError
-> {
-  const editor = vscode.window.activeTextEditor
-  if (!editor) return err(new ContextCommandError('No active editor.'))
-
-  const { selection } = editor
-  if (selection.isEmpty) return err(new ContextCommandError('No text selected.'))
-
-  const snippet = editor.document.getText(selection)
-  if (snippet.trim().length === 0) return err(new ContextCommandError('Selection is empty.'))
-
-  const filePath = editor.document.uri.fsPath
-  if (!filePath) return err(new ContextCommandError('Active editor has no file path.'))
-
-  return ok({ filePath, snippet, range: selectionToRange(editor) })
-}
-
-async function showQueuedContextNotice(openChat: () => Promise<void>): Promise<void> {
-  const choice = await vscode.window.showInformationMessage(
-    'Context added. Open BabaDeluxe Chat to use it.',
-    'Open Chat'
-  )
-
-  if (choice === 'Open Chat') {
-    await openChat()
-  }
-}
+import { useBabaSidebarView } from './baba-sidebar-view.js'
+import { registerDevelopmentAutoReload } from './development-auto-reload.js'
+import { disposeAllBm25Runtimes } from './use-bm25-runtime.js'
+import { commandRegistry } from './commands/generated-registry.js'
+import { registerLazyCommands } from './commands/register-lazy-commands.js'
 
 const extension = defineExtension((context: vscode.ExtensionContext) => {
+  logger.log('[extension] BabaDeluxe AI Coder activation started')
+
+  logger.log('[extension] 1. Registering development auto-reload')
+  registerDevelopmentAutoReload(context)
+
+  logger.log('[extension] 2. Creating SupabaseOAuthController')
   const supabaseOAuthController = new SupabaseOAuthController(context, logger)
-
-  const chatPanelManager = new ChatPanelManager(context, context.extensionUri)
-  const provider = new BabaDeluxeWebviewProvider(
-    context,
-    context.extensionUri,
-    supabaseOAuthController
-  )
-
-  const openChat = async (): Promise<void> => {
-    await vscode.commands.executeCommand('babadeluxe-ai-coder.showChat')
-  }
-
   useDisposable(supabaseOAuthController)
-  useDisposable(provider)
 
+  logger.log('[extension] 3. Calling useBabaSidebarView')
+  const sidebar = useBabaSidebarView({
+    context,
+    extensionUri: context.extensionUri,
+    supabaseOAuthController,
+  })
+  logger.log('[extension] 4. useBabaSidebarView returned successfully')
+
+  logger.log('[extension] 5. Registering URI handler')
   useDisposable(
     vscode.window.registerUriHandler({
       async handleUri(uri: vscode.Uri): Promise<void> {
-        logger.log('URI handler got:', uri.toString())
+        const toSafeLoggableUri = (value: vscode.Uri): string =>
+          `${value.scheme}://${value.authority}${value.path}`
+
+        logger.log('[extension] URI handler received:', toSafeLoggableUri(uri))
         const result = await supabaseOAuthController.handleAuthCallback(uri)
         if (result.isErr()) {
-          logger.warn('Auth callback failed:', result.error.message)
+          logger.warn('[extension] Auth callback failed:', result.error.message)
           void vscode.window.showErrorMessage(result.error.message)
         }
       },
     })
   )
 
-  useDisposable(vscode.window.registerWebviewViewProvider('babadeluxe-ai-coder-panel', provider))
-
-  useCommands({
-    async 'babadeluxe-ai-coder.showChat'() {
-      logger.log('registering chat panel')
-      await chatPanelManager.createChatPanel()
-    },
-
-    async 'babadeluxe-ai-coder.setContextRoot'() {
-      const scopeUri = vscode.window.activeTextEditor?.document.uri
-      const defaultUri =
-        vscode.workspace.workspaceFolders?.[0]?.uri ?? vscode.Uri.file(process.cwd())
-
-      const picked = await vscode.window.showOpenDialog({
-        title: 'Select context root folder',
-        openLabel: 'Use folder',
-        canSelectMany: false,
-        canSelectFiles: false,
-        canSelectFolders: true,
-        defaultUri,
-      })
-
-      const uri = picked?.[0]
-      if (!uri) return
-
-      const cfg = vscode.workspace.getConfiguration(section, scopeUri)
-      const target = getBestTarget(scopeUri)
-
-      await cfg.update(key, uri.fsPath, target)
-
-      void vscode.window.showInformationMessage(
-        target === vscode.ConfigurationTarget.Global
-          ? 'Context root set in User settings (no workspace open).'
-          : 'Context root set in Workspace settings.'
-      )
-    },
-
-    async 'babadeluxe-ai-coder.clearContextRoot'() {
-      const scopeUri = vscode.window.activeTextEditor?.document.uri
-      const cfg = vscode.workspace.getConfiguration(section, scopeUri)
-      const target = getBestTarget(scopeUri)
-
-      await cfg.update(key, undefined, target)
-
-      void vscode.window.showInformationMessage(
-        target === vscode.ConfigurationTarget.Global
-          ? 'Context root cleared from User settings.'
-          : 'Context root cleared from Workspace settings.'
-      )
-    },
-
-    async 'babadeluxe-ai-coder.openSettings'() {
-      const query = '@ext:babadeluxe.babadeluxe-vscode'
-
-      if (vscode.workspace.workspaceFolders?.length) {
-        await vscode.commands.executeCommand('workbench.action.openWorkspaceSettings', query)
-        return
-      }
-
-      await vscode.commands.executeCommand('workbench.action.openSettings', query)
-    },
-
-    async 'babadeluxe-ai-coder.context.addFileToBabaContext'(resource?: vscode.Uri) {
-      const uri = resource ?? vscode.window.activeTextEditor?.document.uri
-      if (!uri) {
-        logger.error('AddFileToBabaContext failed: no resource and no active editor.')
-        void vscode.window.showErrorMessage('No file selected.')
-        return
-      }
-
-      const message: PinFileMessage = { type: 'context:pinFile', filePath: uri.fsPath }
-
-      const postResult = await provider.postMessageToSidebar(message)
-      if (postResult.isErr()) {
-        logger.error('AddFileToBabaContext failed:', postResult.error)
-        void vscode.window.showErrorMessage('Failed to add context.')
-        return
-      }
-
-      if (postResult.value.kind === 'queued') {
-        await showQueuedContextNotice(openChat)
-      }
-    },
-
-    async 'babadeluxe-ai-coder.context.addSelectionToBabaContext'() {
-      const selectionResult = getSelectionSnippet()
-      if (selectionResult.isErr()) {
-        logger.error('AddSelectionToBabaContext failed:', selectionResult.error)
-        void vscode.window.showErrorMessage(selectionResult.error.message)
-        return
-      }
-
-      const message: PinSnippetMessage = {
-        type: 'context:pinSnippet',
-        id: makeId(),
-        filePath: selectionResult.value.filePath,
-        range: selectionResult.value.range,
-        snippet: selectionResult.value.snippet,
-      }
-
-      const postResult = await provider.postMessageToSidebar(message)
-      if (postResult.isErr()) {
-        logger.error('AddSelectionToBabaContext failed:', postResult.error)
-        void vscode.window.showErrorMessage('Failed to add context.')
-        return
-      }
-
-      if (postResult.value.kind === 'queued') {
-        await showQueuedContextNotice(openChat)
-      }
-    },
-  })
-
-  logger.log('BabaDeluxe AI Coder extension activated')
-
-  return {
-    // Optional: export stuff for tests/other modules later (not needed now)
+  const openChat = async () => {
+    logger.log('[extension] Opening chat sidebar')
+    return vscode.commands.executeCommand('babadeluxe-ai-coder-chat.focus')
   }
+
+  logger.log('[extension] 6. Registering commands (lazy)')
+  useCommands(
+    registerLazyCommands({
+      dependencies: {
+        context,
+        vscode,
+        logger,
+        sidebar,
+        openChat,
+      },
+      entries: commandRegistry,
+    })
+  )
+
+  logger.log('[extension] BabaDeluxe AI Coder extension activated successfully')
+
+  return {}
 })
 
-export const { activate } = extension
-export const { deactivate } = extension
+export const { activate, deactivate: deactivateExtension } = extension
+
+export function deactivate() {
+  logger.log('[extension] Deactivating extension, disposing BM25 runtimes')
+  disposeAllBm25Runtimes()
+
+  if (deactivateExtension) {
+    void deactivateExtension()
+  }
+
+  logger.log('[extension] Extension deactivated')
+}

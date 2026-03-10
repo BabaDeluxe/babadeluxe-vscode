@@ -7,7 +7,7 @@ import PQueue from 'p-queue'
 import { JsonParseError, safeJsonParse } from '@babadeluxe/shared/utils'
 // @ts-expect-error No declaration file
 import bm25, { type WinkBm25Engine } from 'wink-bm25-text-search'
-import { pickAdaptiveCandidates, pickAdaptiveScoredCandidates } from './adaptive-candidates.js'
+import { pickAdaptiveScoredCandidates } from './adaptive-candidates.js'
 import { type EngineWithMapping, type ScoredCandidate } from './types.js'
 import { IndexStorage } from './index-storage.js'
 import { extractSearchTerms } from './search-term-extractor.js'
@@ -79,11 +79,6 @@ export class Bm25IndexService {
 
     logger.log(`[bm25] rebuild complete, docs=${this._idToPath.length}`)
     return ok(undefined)
-  }
-
-  public searchAdaptiveFilePaths(query: string): string[] {
-    const scored = this._searchScoredFilePaths(query, 120)
-    return pickAdaptiveCandidates(scored)
   }
 
   public searchAdaptiveCandidates(query: string): ScoredCandidate[] {

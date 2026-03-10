@@ -1,5 +1,5 @@
 import PQueue from 'p-queue'
-import { logger } from './logger.js'
+import type { logger } from './logger.js'
 
 export class Bm25RebuildQueue {
   private readonly _queue = new PQueue({ concurrency: 1 })
@@ -9,7 +9,8 @@ export class Bm25RebuildQueue {
 
   public constructor(
     private readonly _debounceMs: number,
-    private readonly _runRebuild: (reason: string) => Promise<void>
+    private readonly _runRebuild: (reason: string) => Promise<void>,
+    private readonly _logger: typeof logger
   ) {}
 
   public request(reason: string): void {
@@ -18,14 +19,17 @@ export class Bm25RebuildQueue {
     this._pendingReason = reason
 
     if (this._debounceTimer) clearTimeout(this._debounceTimer)
+
     this._debounceTimer = setTimeout(() => {
       this._debounceTimer = undefined
-      // eslint-disable-next-line promise/prefer-await-to-then
-      void this._enqueue(this._pendingReason).catch((error: unknown) => {
-        // do NOT swallow silently; log or rethrow via a provided logger
-        // (we'll wire logger in next step if you want)
-        logger.error('BM25 rebuild enqueue failed:', error)
-      })
+
+      void (async (): Promise<void> => {
+        try {
+          await this._enqueue(this._pendingReason)
+        } catch (error: unknown) {
+          this._logger.error('BM25 rebuild enqueue failed:', error)
+        }
+      })()
     }, this._debounceMs)
   }
 
@@ -38,9 +42,7 @@ export class Bm25RebuildQueue {
     this._queue.clear()
   }
 
-  private async _enqueue(reason: string) {
-    return this._queue.add(async () => {
-      await this._runRebuild(reason)
-    })
+  private async _enqueue(reason: string): Promise<void> {
+    return this._queue.add(async () => this._runRebuild(reason))
   }
 }

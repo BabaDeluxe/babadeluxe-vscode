@@ -4,6 +4,7 @@ import { err, ok, ResultAsync, type Result } from 'neverthrow'
 import { type JsonParseError, safeJsonParse } from '@babadeluxe/shared/utils'
 import { parseOAuthCallbackUriString } from './auth-callback-parser.js'
 import type { SupabaseSessionPayload, ExtensionLogger, SupabaseConfiguration } from './types.js'
+import { SignInError } from './errors.js'
 
 type SupabaseClientType = ReturnType<typeof createClient>
 
@@ -30,15 +31,12 @@ export class SupabaseOAuthController implements vscode.Disposable {
     Result<SupabaseSessionPayload | undefined, JsonParseError>
   > {
     const rawSession = await this._extensionContext.secrets.get(this._sessionSecretKey)
-
-    if (!rawSession) {
-      return ok(undefined)
-    }
+    if (!rawSession) return ok(undefined)
 
     const parsed = safeJsonParse(rawSession)
-    if (parsed.isErr()) {
-      return err(parsed.error)
-    }
+    if (parsed.isErr()) return err(parsed.error)
+
+    this._logger.log('Got stored supabase payload:', parsed)
 
     return ok(parsed.value as SupabaseSessionPayload)
   }
@@ -63,15 +61,21 @@ export class SupabaseOAuthController implements vscode.Disposable {
           skipBrowserRedirect: true,
         },
       }),
-      (error: unknown) => new Error(`Supabase signInWithOAuth failed: ${String(error)}`)
+      (error: unknown) => new SignInError(`Supabase signInWithOAuth failed: ${String(error)}`)
     )
 
     if (signInResult.isErr()) return err(signInResult.error)
 
     const { data } = signInResult.value
     if (!data?.url) {
-      return err(new Error('Supabase signInWithOAuth did not return an auth URL'))
+      return err(new SignInError('Supabase signInWithOAuth did not return an auth URL'))
     }
+
+    // Implicit flow URL fix: The client usually returns a URL with response_type=code by default
+    // unless flowType: 'implicit' is set in createClient options (which we did).
+    // However, some versions might still default to PKCE in the URL generation.
+    // If the URL contains 'response_type=code', we might need to manually force it,
+    // but the createClient config should handle it.
 
     const openResult = await ResultAsync.fromPromise(
       vscode.env.openExternal(vscode.Uri.parse(data.url)),
@@ -84,54 +88,30 @@ export class SupabaseOAuthController implements vscode.Disposable {
   }
 
   public readonly handleAuthCallback = async (uri: vscode.Uri): Promise<Result<void, Error>> => {
-    const configurationResult = this._getSupabaseConfiguration()
-    if (configurationResult.isErr()) {
-      return err(configurationResult.error)
-    }
+    // We do NOT need to create a client or load config just to parse the URL tokens.
+    // We only need the config if we were doing code exchange.
 
     const parsedCallbackResult = parseOAuthCallbackUriString(uri.toString(true))
     if (parsedCallbackResult.isErr()) {
+      // If parsing fails, it might be an invalid URI or just not an auth callback.
+      // We log it but return Ok(undefined) to avoid crashing unrelated URI handling.
+      this._logger.warn(`Failed to parse auth callback: ${parsedCallbackResult.error.message}`)
       return ok(undefined)
     }
 
     const parsedCallback = parsedCallbackResult.value
-    const supabase = this._createSupabaseClient(configurationResult.value)
 
     if (parsedCallback.kind === 'code') {
-      const exchangeResult = await ResultAsync.fromPromise(
-        supabase.auth.exchangeCodeForSession(parsedCallback.code),
-        (error: unknown) => new Error(`exchangeCodeForSession failed: ${String(error)}`)
+      // STOP: We cannot handle 'code' because we lack the PKCE verifier in this context.
+      // This means the implicit flow configuration failed.
+      return err(
+        new Error(
+          'Received OAuth code but expected Implicit Flow tokens. PKCE is not supported in this context.'
+        )
       )
-
-      if (exchangeResult.isErr()) {
-        return err(exchangeResult.error)
-      }
-
-      const { data, error } = exchangeResult.value
-      if (error) {
-        return err(new Error(`exchangeCodeForSession returned error: ${error.message}`))
-      }
-
-      if (!data.session) {
-        return err(new Error('No session returned from exchangeCodeForSession'))
-      }
-
-      const sessionPayload: SupabaseSessionPayload = {
-        accessToken: data.session.access_token,
-        refreshToken: data.session.refresh_token,
-        expiresAtUnixSeconds: data.session.expires_at ?? undefined,
-      }
-
-      await this._extensionContext.secrets.store(
-        this._sessionSecretKey,
-        JSON.stringify(sessionPayload)
-      )
-      this._sessionEmitter.fire(sessionPayload)
-
-      this._logger.log('OAuth success: Supabase session stored (code flow).')
-      return ok(undefined)
     }
 
+    // Success path: Implicit flow
     const sessionPayload: SupabaseSessionPayload = {
       accessToken: parsedCallback.accessToken,
       refreshToken: parsedCallback.refreshToken,
@@ -142,6 +122,8 @@ export class SupabaseOAuthController implements vscode.Disposable {
       this._sessionSecretKey,
       JSON.stringify(sessionPayload)
     )
+
+    // Notify subscribers (the webview)
     this._sessionEmitter.fire(sessionPayload)
 
     this._logger.log('OAuth success: Supabase session stored (implicit flow).')
@@ -161,7 +143,8 @@ export class SupabaseOAuthController implements vscode.Disposable {
   private _createSupabaseClient(configuration: SupabaseConfiguration): SupabaseClientType {
     return createClient(configuration.supabaseUrl, configuration.supabaseAnonKey, {
       auth: {
-        flowType: 'pkce',
+        // !!! IMPORTANT CHANGE: Force implicit flow to avoid PKCE/LocalStorage issues !!!
+        flowType: 'implicit',
         persistSession: false,
         autoRefreshToken: false,
         detectSessionInUrl: false,
