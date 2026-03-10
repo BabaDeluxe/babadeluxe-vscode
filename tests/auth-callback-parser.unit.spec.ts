@@ -27,17 +27,18 @@ describe('parseOAuthCallbackUriString', () => {
   })
 
   test('Parses implicit hash flow', () => {
-    const result = parseOAuthCallbackUriString(
-      'vscode://babadeluxe.babadeluxe-vscode/auth-callback?windowId=100#access_token=at123&refresh_token=rt456&expires_at=1769002234'
-    )
+    const url =
+      'https://example.com/auth-callback#access_token=at123&refresh_token=rt456&expires_in=3600'
 
-    if (result.isErr()) {
-      throw result.error
-    }
+    const now = 1768998634 // 1768998634 + 3600 = 1769002234
+
+    const result = parseOAuthCallbackUriString(url, now)
+
+    expect(result.isOk()).toBe(true)
+    if (result.isErr()) throw result.error
 
     expect(result.value.kind).toBe('implicit')
-    if (result.value.kind !== 'implicit') return
-
+    if (result.value.kind !== 'implicit') throw new Error('Expected implicit flow')
     expect(result.value.accessToken).toBe('at123')
     expect(result.value.refreshToken).toBe('rt456')
     expect(result.value.expiresAtUnixSeconds).toBe(1769002234)
