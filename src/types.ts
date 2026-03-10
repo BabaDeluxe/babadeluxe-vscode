@@ -1,17 +1,6 @@
 import type * as vscode from 'vscode'
 // @ts-expect-error No declaration file
 import { type WinkBm25Engine } from 'wink-bm25-text-search'
-import type { Bm25IndexService } from './bm25-index-service.js'
-import type { Bm25RebuildQueue } from './bm25-rebuild-queue.js'
-
-export type Role = 'user' | 'assistant' | 'system'
-
-export type ContextItem = {
-  readonly type: 'file' | 'note'
-  readonly source?: 'rg' | 'manual'
-  readonly filePath?: string
-  readonly content: string
-}
 
 export type FileSignals = {
   readonly isActive: boolean
@@ -27,23 +16,8 @@ export type UiContextItem = {
   readonly id: string
   readonly kind: 'auto' | 'manual'
   readonly filePath?: string
-
-  /**
-   * For manual snippet pinning, this is the exact selected text.
-   * For manual file pinning, this is the full file content.
-   * For auto context, this stays undefined (no preview required).
-   */
   readonly snippet?: string
-
-  /**
-   * For auto context: union score of independent factors.
-   */
   readonly score?: number
-
-  /**
-   * Exact range for snippet / best-match range for auto context.
-   * Undefined for BM25-only candidates.
-   */
   readonly matchRange?: TextRange
 }
 
@@ -123,17 +97,17 @@ export type RgRunOutput = Readonly<{
   exitCode: number | null
 }>
 
-export type Bm25Runtime = Readonly<{
-  rootFsPath: string
-  bm25IndexService: Bm25IndexService
-  rebuildQueue: Bm25RebuildQueue
-  watcher: vscode.Disposable
-  hourlyTimer: NodeJS.Timeout
-  referenceCount: number
+/**
+ * Structural contract to avoid importing the concrete class here (breaks cycles).
+ */
+export type Bm25IndexServiceLike = Readonly<{
+  loadCacheIfPossible: () => Promise<unknown>
+  rebuildInBackground: () => Promise<unknown>
+  searchAdaptiveCandidates: (query: string) => ScoredCandidate[]
 }>
 
 export type Bm25RuntimeHandle = Readonly<{
-  bm25IndexService: Bm25IndexService
+  bm25IndexService: Bm25IndexServiceLike
   dispose: () => void
 }>
 
@@ -164,9 +138,14 @@ export type PinSnippetMessage = Readonly<{
 export type ContextUnpinFileMessage = Readonly<{ type: 'context:unpinFile'; filePath: string }>
 export type ContextClearAllMessage = Readonly<{ type: 'context:clearAll' }>
 
+export type NavigateToMessage = Readonly<{
+  type: 'navigate-to'
+  payload: { view: string }
+}>
+
 export type WebviewMessage =
   | Readonly<{ type: 'sidebar.ready' }>
-  | Readonly<{ type: 'contextRoot.get' }>
+  | Readonly<{ type: 'contextRoot.getCurrent' }>
   | Readonly<{ type: 'contextRoot.pick' }>
   | Readonly<{ type: 'contextRoot.clear' }>
   | Readonly<{ type: 'contextRoot.openSettings' }>
@@ -174,5 +153,11 @@ export type WebviewMessage =
   | Readonly<{ type: 'fileContext:resolve'; requestId: string; filePaths: string[] }>
   | Readonly<{ type: 'auth.login' }>
   | Readonly<{ type: 'auth.getSession' }>
+  | NavigateToMessage
   | ContextUnpinFileMessage
   | ContextClearAllMessage
+
+export type WebviewCommonApi = {
+  postContextRoot: (webview: vscode.Webview) => void
+  handleWebviewMessage: (message: WebviewMessage, webview: vscode.Webview) => Promise<boolean>
+}

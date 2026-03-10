@@ -1,123 +1,119 @@
 import * as path from 'node:path'
 import { randomUUID } from 'node:crypto'
-import { type Result, ok, err } from 'neverthrow'
+import { ok, err, type Result } from 'neverthrow'
+import { type Ref, useActiveTextEditor, useVisibleTextEditors, computed } from 'reactive-vscode'
 import type { RgContextBuilder } from './rg-context-builder.js'
-import type { FileSignalProvider, TextRange, UiContextItem } from './types.js'
+import type { UiContextItem, TextRange } from './types.js'
 import { ContextBuildError } from './errors.js'
 import { logger } from './logger.js'
 import type { Bm25IndexService } from './bm25-index-service.js'
+import { useGitRecencyMap } from './use-git-recency-map.js'
+import { useRecentFiles } from './use-recent-files.js'
+import { type ScoringContext, useContextScorer } from './use-scoring-context.js'
 
-type CombinedSignals = {
-  bm25Score?: number
-  rgScore?: number
+type ScoredCandidate = {
+  filePath: string
+  score: number
   matchRange?: TextRange
-}
-
-function calculateSignalBoost(signals: {
-  isActive: boolean
-  isOpen: boolean
-  wasEditedThisSession: boolean
-  sameDirAsActive: boolean
-  importsActive: boolean
-  importedByActive: boolean
-  recentlyTouchedInGit: boolean
-}): number {
-  let boost = 0
-  if (signals.isActive) boost += 80
-  if (signals.isOpen) boost += 40
-  if (signals.wasEditedThisSession) boost += 30
-  if (signals.sameDirAsActive) boost += 20
-  if (signals.importsActive) boost += 15
-  if (signals.importedByActive) boost += 15
-  if (signals.recentlyTouchedInGit) boost += 10
-  return boost
+  source: 'bm25' | 'rg' | 'mixed'
 }
 
 export class AutoContextHandler {
+  private readonly _scoringContext: Ref<ScoringContext>
+  private readonly _getSignalBoost: (filePath: string) => number
+  private readonly _ensureGitRecencyFor: (filePath: string) => Promise<void>
+
   public constructor(
     private readonly _contextRootFsPath: string,
     private readonly _contextBuilder: RgContextBuilder,
-    private readonly _signalProvider: FileSignalProvider,
     private readonly _bm25IndexService?: Bm25IndexService
-  ) {}
+  ) {
+    const activeEditor = useActiveTextEditor()
+    const visibleEditors = useVisibleTextEditors()
+    const recentFiles = useRecentFiles()
+    const { gitRecencyByPath, ensureRecencyFor } = useGitRecencyMap(_contextRootFsPath)
+
+    this._scoringContext = computed(() => ({
+      activeFilePath: activeEditor.value?.document.uri.fsPath,
+      visibleFilePaths: new Set(visibleEditors.value.map((editor) => editor.document.uri.fsPath)),
+      recentFilePaths: recentFiles.value,
+      gitRecencyByPath: gitRecencyByPath.value,
+    }))
+
+    this._getSignalBoost = useContextScorer(this._scoringContext)
+    this._ensureGitRecencyFor = ensureRecencyFor
+  }
 
   public async handleRequest(query: string): Promise<Result<UiContextItem[], ContextBuildError>> {
     if (!query?.trim()) return err(new ContextBuildError('Query cannot be empty'))
 
-    const rawBm25 = this._bm25IndexService?.searchAdaptiveCandidates(query) ?? []
-    const maxBm25Score = rawBm25.length > 0 ? Math.max(0, rawBm25[0]!.score) : 0
-
+    const bm25Result = this._bm25IndexService?.searchAdaptiveCandidates(query) ?? []
     const rgResult = await this._contextBuilder.buildContext(query)
 
-    const combinedByFilePath = new Map<string, CombinedSignals>()
+    const mergedCandidates = this._mergeAndScore(bm25Result, rgResult)
 
-    for (const candidate of rawBm25) {
-      const filePath = path.isAbsolute(candidate.filePath)
-        ? candidate.filePath
-        : path.join(this._contextRootFsPath, candidate.filePath)
+    logger.log(`Built ${mergedCandidates.length} context references for query: "${query}"`)
 
-      combinedByFilePath.set(filePath, { bm25Score: candidate.score })
+    return ok(mergedCandidates)
+  }
+
+  private _mergeAndScore(
+    bm25Candidates: Array<{ filePath: string; score: number }>,
+    rgResult: Result<ReadonlyArray<{ file: string; score: number; matchRange: TextRange }>, unknown>
+  ): UiContextItem[] {
+    const candidateMap = new Map<string, ScoredCandidate>()
+
+    const maxBm25 = bm25Candidates.length > 0 ? bm25Candidates[0]!.score : 1
+    for (const c of bm25Candidates) {
+      const absPath = this._resolvePath(c.filePath)
+      candidateMap.set(absPath, {
+        filePath: absPath,
+        score: (c.score / maxBm25) * 50,
+        source: 'bm25',
+      })
     }
 
-    let rgResults: ReadonlyArray<{ file: string; score: number; matchRange: TextRange }> = []
     if (rgResult.isOk()) {
-      rgResults = rgResult.value
-      for (const result of rgResults) {
-        const filePath = path.isAbsolute(result.file)
-          ? result.file
-          : path.join(this._contextRootFsPath, result.file)
+      for (const r of rgResult.value) {
+        const absPath = this._resolvePath(r.file)
+        const existing = candidateMap.get(absPath)
+        const currentScore = existing?.score ?? 0
 
-        const existing = combinedByFilePath.get(filePath) ?? {}
-        combinedByFilePath.set(filePath, {
-          ...existing,
-          rgScore: result.score,
-          matchRange: result.matchRange,
+        candidateMap.set(absPath, {
+          filePath: absPath,
+          score: currentScore + r.score,
+          matchRange: r.matchRange,
+          source: existing ? 'mixed' : 'rg',
         })
       }
     } else {
-      logger.warn('[context] RG search failed, continuing with BM25-only results:', rgResult.error)
-      if (combinedByFilePath.size === 0) {
-        return err(new ContextBuildError('Failed to search codebase', rgResult.error))
-      }
+      logger.warn('[context] RG search failed:', rgResult.error)
     }
-
-    if (combinedByFilePath.size === 0) {
-      const hotFiles = this._signalProvider.listHotFilePaths().slice(0, 30)
-      for (const hotFile of hotFiles) {
-        combinedByFilePath.set(hotFile, {})
-      }
-    }
-
-    const rgTopScore = rgResults.length > 0 ? Math.max(0, rgResults[0]!.score) : 0
-    const bm25Scale = rgTopScore > 0 ? rgTopScore : 50
 
     const items: UiContextItem[] = []
-    for (const [filePath, signals] of combinedByFilePath.entries()) {
-      const bm25Normalized =
-        signals.bm25Score !== undefined && maxBm25Score > 0 ? signals.bm25Score / maxBm25Score : 0
 
-      const bm25Contribution = bm25Normalized * bm25Scale
-      const rgContribution = signals.rgScore ?? 0
+    if (candidateMap.size === 0) {
+      return []
+    }
 
-      const signalBoost = calculateSignalBoost(this._signalProvider.getSignalsForFile(filePath))
+    for (const candidate of candidateMap.values()) {
+      void this._ensureGitRecencyFor(candidate.filePath)
+
+      const boost = this._getSignalBoost(candidate.filePath)
 
       items.push({
         id: randomUUID(),
         kind: 'auto',
-        filePath,
-        score: rgContribution + bm25Contribution + signalBoost,
-        matchRange: signals.matchRange,
+        filePath: candidate.filePath,
+        score: candidate.score + boost,
+        matchRange: candidate.matchRange,
       })
     }
 
-    items.sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+    return items.sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).slice(0, 120)
+  }
 
-    const capped = items.slice(0, 120)
-
-    logger.log(
-      `Built ${capped.length} context references for query: "${query}" (bm25=${rawBm25.length}, rg=${rgResults.length})`
-    )
-
-    return ok(capped)
+  private _resolvePath(filePath: string): string {
+    return path.isAbsolute(filePath) ? filePath : path.join(this._contextRootFsPath, filePath)
   }
 }
