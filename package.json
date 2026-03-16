@@ -70,13 +70,16 @@
     "@sindresorhus/tsconfig": "^8.0.1",
     "@types/node": "22.x",
     "@types/vscode": "^1.104.0",
+    "baseline-browser-mapping": "^2.10.8",
     "husky": "^9.1.7",
+    "jest-mock-vscode": "^4.8.2",
     "typescript": "^5.9.2",
     "vite": "^7.1.5",
+    "vitest": "^4.1.0",
     "xo": "^1.2.2"
   },
   "dependencies": {
-    "@babadeluxe/shared": "^0.1.18",
+    "@babadeluxe/shared": "^0.20.0",
     "combine-async-iterators": "^3.0.0"
   }
 }
