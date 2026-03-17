@@ -1,20 +1,78 @@
-// See https://go.microsoft.com/fwlink/?LinkId=733558
-// for the documentation about the tasks.json format
 {
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"type": "npm",
-			"script": "watch",
-			"problemMatcher": "$tsc-watch",
+			"label": "Start Dev Watchers",
+			"dependsOn": [
+				"Watch Extension",
+				"Kill and Start Webview"
+			],
+			"problemMatcher": []
+		},
+		{
+			"label": "Watch Extension",
+			"type": "shell",
+			"command": "npm run watch",
 			"isBackground": true,
-			"presentation": {
-				"reveal": "never"
-			},
-			"group": {
-				"kind": "build",
-				"isDefault": true
+			"problemMatcher": {
+				"owner": "vite-extension",
+				"fileLocation": "relative",
+				"pattern": {
+					"regexp": "^([^\\s].*):(\\d+):(\\d+):\\s+(error|warning):\\s+(.*)$",
+					"file": 1,
+					"line": 2,
+					"column": 3,
+					"severity": 4,
+					"message": 5
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": ".*vite.*",
+					"endsPattern": ".*built in.*"
+				}
 			}
+		},
+		{
+			"label": "Kill and Start Webview",
+			"dependsOn": [
+				"Kill Webview Port"
+			],
+			"dependsOrder": "sequence",
+			"type": "shell",
+			"command": "npm run dev",
+			"options": {
+				"cwd": "${workspaceFolder}/../babadeluxe-webview"
+			},
+			"isBackground": true,
+			"problemMatcher": {
+				"owner": "vite-webview",
+				"fileLocation": "relative",
+				"pattern": {
+					"regexp": "^([^\\s].*):(\\d+):(\\d+):\\s+(error|warning):\\s+(.*)$",
+					"file": 1,
+					"line": 2,
+					"column": 3,
+					"severity": 4,
+					"message": 5
+				},
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": ".*VITE.*",
+					"endsPattern": ".*Local:.*http://127\\.0\\.0\\.1:5100.*"
+				}
+			}
+		},
+		{
+			"label": "Kill Webview Port",
+			"type": "shell",
+			"command": "npx fkill-cli -f :5100 --silent || exit 0",
+			"options": {
+				"cwd": "${workspaceFolder}/../babadeluxe-webview"
+			},
+			"presentation": {
+				"reveal": "silent"
+			},
+			"problemMatcher": []
 		}
 	]
 }
