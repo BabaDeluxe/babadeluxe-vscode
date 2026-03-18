@@ -1,7 +1,7 @@
 import process from 'node:process'
 import PQueue from 'p-queue'
-import { maxFolderPinFiles } from '../constants.js'
-import { scanFolderForIndexableFiles } from '../fs-utils.js'
+import { maxFolderPinFiles } from '../infra/constants.js'
+import { scanFolderForIndexableFiles } from '../infra/fs-utils.js'
 import type { CommandDependencies, CommandManifest, ExtensionCommand } from './types.js'
 import { isQueuedPostStatus, pickFolderUri, showQueuedContextNotice, toUri } from './helper.js'
 
@@ -20,7 +20,7 @@ export const addFolderToContextManifest: CommandManifest = {
 
 export class AddFolderToContextCommand implements ExtensionCommand {
   async run(dependencies: CommandDependencies, ...args: unknown[]): Promise<void> {
-    const { logger, sidebar, vscode, openChat } = dependencies
+    const { logger, sidebar, vscode, openChat, gb } = dependencies
 
     logger.log('[command] addFolderToBabaContext called')
 
@@ -59,6 +59,7 @@ export class AddFolderToContextCommand implements ExtensionCommand {
     if (scanResult.isErr()) {
       logger.error('[command] Folder scan failed:', scanResult.error)
       void vscode.window.showErrorMessage('Failed to scan folder.')
+      gb.track('add-folder-scan-failed', { error: scanResult.error.message })
       return
     }
 
@@ -67,6 +68,7 @@ export class AddFolderToContextCommand implements ExtensionCommand {
 
     if (scan.fileUris.length === 0) {
       void vscode.window.showInformationMessage('No indexable files found in folder.')
+      gb.track('add-folder-empty', { folderPath: effectiveFolderUri.fsPath })
       return
     }
 
@@ -77,7 +79,10 @@ export class AddFolderToContextCommand implements ExtensionCommand {
         'Pin folder',
         'Cancel'
       )
-      if (choice !== 'Pin folder') return
+      if (choice !== 'Pin folder') {
+        gb.track('add-folder-cancelled-depth', { depth: scan.maxDepth })
+        return
+      }
     }
 
     if (scan.wasCapped) {
@@ -87,7 +92,10 @@ export class AddFolderToContextCommand implements ExtensionCommand {
         `Pin ${maxFolderPinFiles}`,
         'Cancel'
       )
-      if (choice !== `Pin ${maxFolderPinFiles}`) return
+      if (choice !== `Pin ${maxFolderPinFiles}`) {
+        gb.track('add-folder-cancelled-capped', { count: scan.fileUris.length })
+        return
+      }
     }
 
     const fileUris = scan.fileUris.slice(0, maxFolderPinFiles)
@@ -114,6 +122,11 @@ export class AddFolderToContextCommand implements ExtensionCommand {
 
     await Promise.race([queue.onError(), queue.onIdle()])
     await Promise.allSettled(taskPromises)
+
+    gb.track('add-folder-success', {
+      folderPath: effectiveFolderUri.fsPath,
+      fileCount: fileUris.length
+    })
 
     logger.log('[command] Pinned', fileUris.length, 'files from folder')
     void vscode.window.showInformationMessage(`Pinned ${fileUris.length} files from folder.`)

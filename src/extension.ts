@@ -1,22 +1,40 @@
 import * as vscode from 'vscode'
-import { defineExtension, useCommands, useDisposable } from 'reactive-vscode'
-import { logger } from './logger.js'
-import { SupabaseOAuthController } from './supabase-oauth-controller.js'
-import { useBabaSidebarView } from './baba-sidebar-view.js'
-import { registerDevelopmentAutoReload } from './development-auto-reload.js'
-import { disposeAllBm25Runtimes } from './use-bm25-runtime.js'
+import { defineExtension, useCommands, useDisposable, watchEffect } from 'reactive-vscode'
+import { logger } from './infra/logger.js'
+import { SupabaseOAuthController } from './auth/supabase-oauth-controller.js'
+import { useBabaSidebarView } from './webview/baba-sidebar-view.js'
+import { registerDevelopmentAutoReload } from './ui/development-auto-reload.js'
+import { disposeAllBm25Runtimes } from './bm25/use-bm25-runtime.js'
 import { commandRegistry } from './commands/generated-registry.js'
 import { registerLazyCommands } from './commands/register-lazy-commands.js'
+import { initGrowthBook } from './growthbook.js'
+import { type GrowthBook } from '@growthbook/growthbook'
 
-const extension = defineExtension((context: vscode.ExtensionContext) => {
+const extension = defineExtension(async (context: vscode.ExtensionContext) => {
   logger.log('[extension] BabaDeluxe AI Coder activation started')
+
+  logger.log('[extension] 0. Initializing GrowthBook')
+  const gb = initGrowthBook()
+
+  // Start loading features in background
+  const loadPromise = gb.loadFeatures()
 
   logger.log('[extension] 1. Registering development auto-reload')
   registerDevelopmentAutoReload(context)
 
   logger.log('[extension] 2. Creating SupabaseOAuthController')
-  const supabaseOAuthController = new SupabaseOAuthController(context, logger)
+  const supabaseOAuthController = new SupabaseOAuthController(context, logger, gb)
   useDisposable(supabaseOAuthController)
+
+  // Track session status in GrowthBook
+  watchEffect(async () => {
+    const sessionResult = await supabaseOAuthController.getStoredSession()
+    const isLoggedIn = sessionResult.isOk() && !!sessionResult.value
+    gb.setAttributes({
+      ...gb.getAttributes(),
+      isLoggedIn,
+    })
+  })
 
   logger.log('[extension] 3. Calling useBabaSidebarView')
   const sidebar = useBabaSidebarView({
@@ -57,10 +75,19 @@ const extension = defineExtension((context: vscode.ExtensionContext) => {
         logger,
         sidebar,
         openChat,
+        gb,
       },
       entries: commandRegistry,
     })
   )
+
+  // Ensure features are loaded before we finish activation if possible,
+  // but don't block forever if it's slow.
+  try {
+    await Promise.race([loadPromise, new Promise(resolve => setTimeout(resolve, 2000))])
+  } catch (e) {
+    logger.warn('[extension] GrowthBook features load failed or timed out', e)
+  }
 
   logger.log('[extension] BabaDeluxe AI Coder extension activated successfully')
 

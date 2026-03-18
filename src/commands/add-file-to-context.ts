@@ -1,4 +1,4 @@
-import type { PinFileMessage } from '../types.js'
+import type { PinFileMessage } from '../context/types.js'
 import { isQueuedPostStatus, showQueuedContextNotice, toUri } from './helper.js'
 import type { CommandDependencies, CommandManifest, ExtensionCommand } from './types.js'
 
@@ -17,7 +17,7 @@ export const addFileToContextManifest: CommandManifest = {
 
 export class AddFileToContextCommand implements ExtensionCommand {
   async run(dependencies: CommandDependencies, ...args: unknown[]): Promise<void> {
-    const { logger, sidebar, vscode, openChat } = dependencies
+    const { logger, sidebar, vscode, openChat, gb } = dependencies
 
     logger.log('[command] addFileToBabaContext called')
 
@@ -30,6 +30,19 @@ export class AddFileToContextCommand implements ExtensionCommand {
       return
     }
 
+    // A/B test for add file confirmation
+    const showConfirmation = gb.is('add-file-confirmation-enabled')
+    if (showConfirmation) {
+      const confirm = await vscode.window.showInformationMessage(
+        `Add ${vscode.workspace.asRelativePath(uri)} to context?`,
+        'Yes', 'No'
+      )
+      if (confirm !== 'Yes') {
+        gb.track('add-file-cancelled', { filePath: uri.fsPath })
+        return
+      }
+    }
+
     logger.log('[command] Adding file to context:', uri.fsPath)
     const message: PinFileMessage = { type: 'context:pinFile', filePath: uri.fsPath }
 
@@ -37,8 +50,14 @@ export class AddFileToContextCommand implements ExtensionCommand {
     if (postResult.isErr()) {
       logger.error('[command] Failed to add file to context:', postResult.error)
       void vscode.window.showErrorMessage('Failed to add context.')
+      gb.track('add-file-failed', { error: postResult.error.message })
       return
     }
+
+    gb.track('add-file-success', {
+      filePath: uri.fsPath,
+      isQueued: isQueuedPostStatus(postResult.value)
+    })
 
     logger.log('[command] File added, status:', postResult.value)
     if (postResult.isOk() && isQueuedPostStatus(postResult.value)) {

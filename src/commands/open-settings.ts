@@ -11,7 +11,7 @@ export const openSettingsManifest: CommandManifest = {
 
 export class OpenSettingsCommand implements ExtensionCommand {
   async run(dependencies: CommandDependencies): Promise<void> {
-    const { logger, sidebar, vscode } = dependencies
+    const { logger, sidebar, vscode, gb } = dependencies
 
     logger.log('[command] openSettings called - focusing sidebar and sending navigation message')
 
@@ -24,9 +24,11 @@ export class OpenSettingsCommand implements ExtensionCommand {
 
     if (result.isErr()) {
       logger.warn('[command] Failed to send navigation message to sidebar:', result.error.message)
+      gb.track('open-settings-failed', { error: result.error.message })
       return
     }
 
+    gb.track('open-settings-success')
     logger.log('[command] Settings navigation message sent successfully')
   }
 }

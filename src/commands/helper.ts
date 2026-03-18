@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 import type * as vscode from 'vscode'
-import type { PostStatus } from '../webview-pins-controller.js'
+import type { PostStatus } from '../webview/webview-pins-controller.js'
 
 export function isWorkspaceOpen(vscodeApi: typeof import('vscode')): boolean {
   return Boolean(vscodeApi.workspace.workspaceFolders?.length)

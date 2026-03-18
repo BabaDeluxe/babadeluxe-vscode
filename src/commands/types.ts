@@ -1,10 +1,11 @@
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 import type * as vscode from 'vscode'
 import type { Result } from 'neverthrow'
-import type { PostStatus } from '../webview-pins-controller.js'
-import type { SidebarWebviewNotReadyError } from '../errors.js'
+import type { PostStatus } from '../webview/webview-pins-controller.js'
+import type { SidebarWebviewNotReadyError } from '../webview/errors.js'
+import type { GrowthBook } from '@growthbook/growthbook'
 
-export type LoggerLike = typeof import('../logger.js').logger
+export type LoggerLike = typeof import('../infra/logger.js').logger
 
 export type SidebarPostMessageResult = Result<PostStatus | undefined, SidebarWebviewNotReadyError>
 
@@ -18,6 +19,7 @@ export type CommandDependencies = {
   logger: LoggerLike
   sidebar: SidebarLike
   openChat: () => Promise<unknown>
+  gb: GrowthBook
 }
 
 export type MenuItemContribution = Readonly<{

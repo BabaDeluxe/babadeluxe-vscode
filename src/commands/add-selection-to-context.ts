@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 import { type Result, err, ok } from 'neverthrow'
-import { ContextCommandError } from '../errors.js'
-import type { PinSnippetMessage, TextRange } from '../types.js'
+import { ContextCommandError } from '../webview/errors.js'
+import type { PinSnippetMessage, TextRange } from '../context/types.js'
 import type { CommandDependencies, CommandManifest, ExtensionCommand } from './types.js'
 import { isQueuedPostStatus, showQueuedContextNotice } from './helper.js'
 
@@ -46,7 +46,7 @@ export const addSelectionToContextManifest: CommandManifest = {
 
 export class AddSelectionToContextCommand implements ExtensionCommand {
   async run(dependencies: CommandDependencies): Promise<void> {
-    const { logger, sidebar, vscode, openChat } = dependencies
+    const { logger, sidebar, vscode, openChat, gb } = dependencies
 
     logger.log('[command] addSelectionToBabaContext called')
 
@@ -54,6 +54,7 @@ export class AddSelectionToContextCommand implements ExtensionCommand {
     if (selectionResult.isErr()) {
       logger.error('[command] Failed to get selection:', selectionResult.error)
       void vscode.window.showErrorMessage(selectionResult.error.message)
+      gb.track('add-selection-failed', { error: selectionResult.error.message })
       return
     }
 
@@ -70,8 +71,14 @@ export class AddSelectionToContextCommand implements ExtensionCommand {
     if (postResult.isErr()) {
       logger.error('[command] Failed to add snippet to context:', postResult.error)
       void vscode.window.showErrorMessage('Failed to add context.')
+      gb.track('add-selection-post-failed', { error: postResult.error.message })
       return
     }
+
+    gb.track('add-selection-success', {
+      filePath: selectionResult.value.filePath,
+      snippetLength: selectionResult.value.snippet.length
+    })
 
     if (postResult.isOk() && isQueuedPostStatus(postResult.value)) {
       await showQueuedContextNotice({ vscode, openChat })

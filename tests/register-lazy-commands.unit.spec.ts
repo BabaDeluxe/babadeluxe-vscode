@@ -1,13 +1,13 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
 /* eslint-disable @typescript-eslint/naming-convention */
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { registerLazyCommands } from '../src/commands/register-lazy-commands.js'
+import { registerLazyCommands } from '../../src/commands/register-lazy-commands.js'
 import type {
   CommandDependencies,
   ExtensionCommand,
   LazyCommandEntry,
-} from '../src/commands/types.js'
-import { logger } from '../src/logger.js'
+} from '../../src/commands/types.js'
+import { logger } from '../../src/logger.js'
 
 vi.mock('vscode', () => ({
   ExtensionContext: {},

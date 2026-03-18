@@ -1,4 +1,4 @@
-import { setSelectedContextRootFsPath } from '../context-root-storage.js'
+import { setSelectedContextRootFsPath } from '../context/context-root-storage.js'
 import { isWorkspaceOpen, pickFolderUri } from './helper.js'
 import type { CommandDependencies, CommandManifest, ExtensionCommand } from './types.js'
 
@@ -13,7 +13,7 @@ export const setContextRootManifest: CommandManifest = {
 
 export class SetContextRootCommand implements ExtensionCommand {
   async run(dependencies: CommandDependencies): Promise<void> {
-    const { context, logger, vscode } = dependencies
+    const { context, logger, vscode, gb } = dependencies
 
     logger.log('[command] setContextRoot called')
 
@@ -39,11 +39,14 @@ export class SetContextRootCommand implements ExtensionCommand {
 
     if (!uri) {
       logger.log('[command] setContextRoot cancelled by user')
+      gb.track('set-context-root-cancelled')
       return
     }
 
     await setSelectedContextRootFsPath(context, uri.fsPath)
     logger.log('[command] Context root saved in workspaceState:', uri.fsPath)
+
+    gb.track('set-context-root-success', { path: uri.fsPath })
 
     void vscode.window.showInformationMessage('Context root saved for this workspace.')
   }
