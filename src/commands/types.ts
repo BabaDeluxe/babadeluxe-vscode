@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/consistent-type-imports */
 import type * as vscode from 'vscode'
 import type { Result } from 'neverthrow'
 import type { PostStatus } from '../webview/webview-pins-controller.js'
@@ -40,5 +39,5 @@ export type ExtensionCommand = {
 
 export type LazyCommandEntry = Readonly<{
   manifest: CommandManifest
-  load: () => Promise<new () => ExtensionCommand>
+  load: () => Promise<{ new (): ExtensionCommand }>
 }>

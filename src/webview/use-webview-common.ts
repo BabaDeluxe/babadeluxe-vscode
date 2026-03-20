@@ -2,6 +2,7 @@ import { Buffer } from 'node:buffer'
 import * as path from 'node:path'
 import * as vscode from 'vscode'
 import { shallowRef, watchEffect, type Ref } from 'reactive-vscode'
+import type { GrowthBook } from '@growthbook/growthbook'
 import { RgContextBuilder } from '../context/rg-context-builder.js'
 import { AutoContextHandler } from '../context/auto-context-handler.js'
 import { useBm25Runtime } from '../bm25/use-bm25-runtime.js'
@@ -11,7 +12,7 @@ import type { UiContextItem, WebviewCommonApi, WebviewMessage } from './types.js
 export function useWebviewCommon(
   context: vscode.ExtensionContext,
   effectiveRootFsPath: Readonly<Ref<string | undefined>>,
-  gb: import('@growthbook/growthbook').GrowthBook
+  gb: GrowthBook
 ): WebviewCommonApi {
   const activeHandler = shallowRef<AutoContextHandler | undefined>(undefined)
 

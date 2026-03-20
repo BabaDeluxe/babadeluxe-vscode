@@ -1,105 +1,94 @@
 import * as vscode from 'vscode'
-import PQueue from 'p-queue'
 import { err, ok, type Result, ResultAsync } from 'neverthrow'
-import { ignoredDirectories, maxFolderPinFiles } from '../infra/constants.js'
-import { logger } from '../infra/logger.js'
-import { FolderReadDirectoryError, FolderScanQueueError } from './errors.js'
+import { ignoredDirectories, maxFolderPinFiles } from './constants.js'
+import { logger } from './logger.js'
 
-type FolderScanResult = Readonly<{
+export class FileReadError extends Error {
+  constructor(message: string, public readonly cause?: unknown) {
+    super(message)
+    this.name = 'FileReadError'
+  }
+}
+
+export class FolderScanError extends Error {
+  constructor(message: string, public readonly cause?: unknown) {
+    super(message)
+    this.name = 'FolderScanError'
+  }
+}
+
+export async function readWorkspaceFile(
+  uri: vscode.Uri
+): Promise<Result<string, FileReadError>> {
+  const readResult = await ResultAsync.fromPromise(
+    vscode.workspace.fs.readFile(uri),
+    (error: unknown) =>
+      new FileReadError(
+        `Failed to read file "${uri.fsPath}": ${error instanceof Error ? error.message : String(error)}`,
+        error
+      )
+  )
+
+  if (readResult.isErr()) return err(readResult.error)
+  return ok(Buffer.from(readResult.value).toString('utf8'))
+}
+
+export type FolderScanResult = {
   fileUris: vscode.Uri[]
   maxDepth: number
   wasCapped: boolean
-}>
-
-async function readDirectory(
-  uri: vscode.Uri
-): Promise<Result<ReadonlyArray<[string, vscode.FileType]>, FolderReadDirectoryError>> {
-  const result = await ResultAsync.fromPromise(
-    vscode.workspace.fs.readDirectory(uri),
-    (cause: unknown) =>
-      new FolderReadDirectoryError(`readDirectory failed for ${uri.toString()}`, cause)
-  )
-
-  if (result.isErr()) {
-    logger.error('scanFolderForIndexableFiles: readDirectory failed', result.error)
-    return err(result.error)
-  }
-
-  return ok(result.value)
 }
 
-export async function scanFolderForIndexableFiles({
-  rootFolderUri,
-  maxFiles = maxFolderPinFiles,
-  maxConcurrentDirectoryReads = 16,
-}: {
+export async function scanFolderForIndexableFiles(options: {
   rootFolderUri: vscode.Uri
   maxFiles?: number
-  maxConcurrentDirectoryReads?: number
-}): Promise<Result<FolderScanResult, FolderScanQueueError | FolderReadDirectoryError>> {
+}): Promise<Result<FolderScanResult, FolderScanError>> {
+  const { rootFolderUri, maxFiles = maxFolderPinFiles } = options
   const fileUris: vscode.Uri[] = []
   let maxDepth = 0
   let wasCapped = false
 
-  const queue = new PQueue({ concurrency: maxConcurrentDirectoryReads })
-  const taskPromises: Array<Promise<void>> = []
-
-  const stopQueue = (): void => {
-    queue.pause()
-    queue.clear()
-  }
-
-  const enqueueDirectory = (uri: vscode.Uri, depth: number): void => {
+  async function walk(currentUri: vscode.Uri, depth: number): Promise<void> {
     if (wasCapped) return
+    maxDepth = Math.max(maxDepth, depth)
 
-    const taskPromise = queue.add(async () => {
-      if (wasCapped) return
+    if (depth > 10) return
 
-      maxDepth = Math.max(maxDepth, depth)
+    let entries: [string, vscode.FileType][]
+    try {
+      entries = await vscode.workspace.fs.readDirectory(currentUri)
+    } catch (error: unknown) {
+      logger.warn(`Failed to read directory "${currentUri.fsPath}": ${String(error)}`)
+      return
+    }
 
-      const entriesResult = await readDirectory(uri)
-      if (entriesResult.isErr()) {
-        stopQueue()
-        throw entriesResult.error
-      }
+    for (const [name, type] of entries) {
+      if (wasCapped) break
 
-      for (const [name, fileType] of entriesResult.value) {
-        if (wasCapped) return
+      if (ignoredDirectories.has(name)) continue
 
-        if (fileType === vscode.FileType.Directory) {
-          if (ignoredDirectories.includes(name as (typeof ignoredDirectories)[number])) continue
-          enqueueDirectory(vscode.Uri.joinPath(uri, name), depth + 1)
-          continue
-        }
+      const entryUri = vscode.Uri.joinPath(currentUri, name)
 
-        if (fileType === vscode.FileType.File) {
-          fileUris.push(vscode.Uri.joinPath(uri, name))
-
-          if (fileUris.length >= maxFiles) {
-            wasCapped = true
-            stopQueue()
-            return
-          }
+      if (type === vscode.FileType.Directory) {
+        await walk(entryUri, depth + 1)
+      } else if (type === vscode.FileType.File) {
+        fileUris.push(entryUri)
+        if (fileUris.length >= maxFiles) {
+          wasCapped = true
         }
       }
-    })
-
-    taskPromises.push(taskPromise)
+    }
   }
 
-  enqueueDirectory(rootFolderUri, 0)
-
-  const waitResult = await ResultAsync.fromPromise(
-    Promise.race([queue.onError(), queue.onIdle()]),
-    (cause: unknown) => new FolderScanQueueError('Folder scan queue failed', cause)
-  )
-  await Promise.allSettled(taskPromises)
-
-  if (waitResult.isErr()) {
-    logger.error('scanFolderForIndexableFiles: queue failed', waitResult.error)
-    stopQueue()
-    return err(waitResult.error)
+  try {
+    await walk(rootFolderUri, 0)
+    return ok({ fileUris, maxDepth, wasCapped })
+  } catch (error: unknown) {
+    return err(
+      new FolderScanError(
+        `Failed to scan folder "${rootFolderUri.fsPath}": ${error instanceof Error ? error.message : String(error)}`,
+        error
+      )
+    )
   }
-
-  return ok({ fileUris, maxDepth, wasCapped })
 }

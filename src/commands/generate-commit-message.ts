@@ -11,10 +11,10 @@ export const generateCommitMessageManifest: CommandManifest = {
 
 export class GenerateCommitMessageCommand implements ExtensionCommand {
   async run(dependencies: CommandDependencies): Promise<void> {
-    const { logger, vscode, gb } = dependencies
+    const { logger, vscode: vscodeApi, gb } = dependencies
 
     logger.error('[command] git.generateCommitMessage is not implemented yet.')
-    void vscode.window.showErrorMessage('Generate Commit Message is not implemented yet.')
+    void vscodeApi.window.showErrorMessage('Generate Commit Message is not implemented yet.')
 
     gb.track('generate-commit-message-not-implemented')
 

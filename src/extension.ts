@@ -8,7 +8,6 @@ import { disposeAllBm25Runtimes } from './bm25/use-bm25-runtime.js'
 import { commandRegistry } from './commands/generated-registry.js'
 import { registerLazyCommands } from './commands/register-lazy-commands.js'
 import { initGrowthBook } from './growthbook.js'
-import { type GrowthBook } from '@growthbook/growthbook'
 
 const extension = defineExtension(async (context: vscode.ExtensionContext) => {
   logger.log('[extension] BabaDeluxe AI Coder activation started')
@@ -17,7 +16,7 @@ const extension = defineExtension(async (context: vscode.ExtensionContext) => {
   const gb = initGrowthBook()
 
   // Start loading features in background
-  const loadPromise = gb.loadFeatures()
+  const initPromise = gb.init()
 
   logger.log('[extension] 1. Registering development auto-reload')
   registerDevelopmentAutoReload(context)
@@ -41,6 +40,7 @@ const extension = defineExtension(async (context: vscode.ExtensionContext) => {
     context,
     extensionUri: context.extensionUri,
     supabaseOAuthController,
+    gb,
   })
   logger.log('[extension] 4. useBabaSidebarView returned successfully')
 
@@ -84,9 +84,14 @@ const extension = defineExtension(async (context: vscode.ExtensionContext) => {
   // Ensure features are loaded before we finish activation if possible,
   // but don't block forever if it's slow.
   try {
-    await Promise.race([loadPromise, new Promise(resolve => setTimeout(resolve, 2000))])
-  } catch (e) {
-    logger.warn('[extension] GrowthBook features load failed or timed out', e)
+    await Promise.race([
+      initPromise,
+      new Promise<void>((resolve) => {
+        setTimeout(resolve, 2000)
+      })
+    ])
+  } catch (error: unknown) {
+    logger.warn('[extension] GrowthBook features load failed or timed out', error)
   }
 
   logger.log('[extension] BabaDeluxe AI Coder extension activated successfully')

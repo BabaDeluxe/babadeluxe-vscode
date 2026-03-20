@@ -1,4 +1,4 @@
-import { TextRange } from '../scoring/types.js'
+import { type TextRange } from '../scoring/types.js'
 
 export type RgSearchResult = Readonly<{
   file: string
@@ -25,6 +25,5 @@ export type RgParsedMatch = Readonly<{
 export type RgRunOutput = Readonly<{
   stdout: string
   stderr: string
-  // eslint-disable-next-line @typescript-eslint/no-restricted-types
   exitCode: number | null
 }>

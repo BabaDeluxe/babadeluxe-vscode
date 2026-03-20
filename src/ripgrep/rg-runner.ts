@@ -1,41 +1,40 @@
 import { spawn } from 'node:child_process'
-import { type Result, ok, err } from 'neverthrow'
-import { RgSearchError } from './errors.js'
+import { Buffer } from 'node:buffer'
+import { ok, err, type Result } from 'neverthrow'
 import type { RgRunOutput } from './types.js'
 
 export async function runRg(
   rgPath: string,
   cwd: string,
-  args: readonly string[]
-): Promise<Result<RgRunOutput, RgSearchError>> {
+  args: string[]
+): Promise<Result<RgRunOutput, Error>> {
   return new Promise((resolve) => {
-    const rg = spawn(rgPath, args, { cwd })
+    const process = spawn(rgPath, args, { cwd })
 
-    let stdout = ''
-    let stderr = ''
-    let isResolved = false
+    const stdoutBuffers: Buffer[] = []
+    const stderrBuffers: Buffer[] = []
 
-    const resolveOnce = (result: Result<RgRunOutput, RgSearchError>): void => {
-      if (isResolved) return
-
-      isResolved = true
-      resolve(result)
-    }
-
-    rg.stdout.on('data', (chunk: Uint8Array) => {
-      stdout += chunk.toString()
+    process.stdout.on('data', (chunk: Buffer) => {
+      stdoutBuffers.push(chunk)
     })
 
-    rg.stderr.on('data', (chunk: Uint8Array) => {
-      stderr += chunk.toString()
+    process.stderr.on('data', (chunk: Buffer) => {
+      stderrBuffers.push(chunk)
     })
 
-    rg.on('close', (exitCode) => {
-      resolveOnce(ok({ stdout, stderr, exitCode }))
+    process.on('close', (code) => {
+      const stdout = Buffer.concat(stdoutBuffers).toString('utf8')
+      const stderr = Buffer.concat(stderrBuffers).toString('utf8')
+
+      resolve(ok({
+        stdout,
+        stderr,
+        exitCode: code,
+      }))
     })
 
-    rg.on('error', (error) => {
-      resolveOnce(err(new RgSearchError('Failed to spawn ripgrep', error)))
+    process.on('error', (error) => {
+      resolve(err(error instanceof Error ? error : new Error(String(error))))
     })
   })
 }

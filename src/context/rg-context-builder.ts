@@ -6,7 +6,8 @@ import { getRgPath } from '../ripgrep/rg-wrapper.js'
 import { logger } from '../infra/logger.js'
 import { runRg } from '../ripgrep/rg-runner.js'
 import { extractSearchTerms } from '../scoring/search-term-extractor.js'
-import type { RgParsedMatch, RgSearchResult, TextRange } from './types.js'
+import type { RgParsedMatch, RgSearchResult } from '../ripgrep/types.js'
+import type { TextRange } from '../scoring/types.js'
 
 function isRgParsedMatch(value: unknown): value is RgParsedMatch {
   if (typeof value !== 'object' || value === null) return false
@@ -17,20 +18,17 @@ function isRgParsedMatch(value: unknown): value is RgParsedMatch {
   const { data } = maybe
   if (typeof data !== 'object' || data === null) return false
 
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const pathObject = (data as any).path
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const linesObject = (data as any).lines
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const lineNumber = (data as any).line_number
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
-  const { submatches } = data as any
+  const dataRecord = data as Record<string, unknown>
+  const pathObject = dataRecord['path'] as Record<string, unknown> | undefined
+  const linesObject = dataRecord['lines'] as Record<string, unknown> | undefined
+  const lineNumber = dataRecord['line_number'] as number | undefined
+  const submatches = dataRecord['submatches'] as unknown[] | undefined
 
   const hasPath =
-    typeof pathObject === 'object' && pathObject !== null && typeof pathObject.text === 'string'
+    typeof pathObject === 'object' && pathObject !== null && typeof pathObject['text'] === 'string'
 
   const hasLines =
-    typeof linesObject === 'object' && linesObject !== null && typeof linesObject.text === 'string'
+    typeof linesObject === 'object' && linesObject !== null && typeof linesObject['text'] === 'string'
 
   const hasLineNumber = typeof lineNumber === 'number' && Number.isFinite(lineNumber)
 
@@ -40,10 +38,10 @@ function isRgParsedMatch(value: unknown): value is RgParsedMatch {
       (s) =>
         typeof s === 'object' &&
         s !== null &&
-        typeof s.start === 'number' &&
-        Number.isFinite(s.start) &&
-        typeof s.end === 'number' &&
-        Number.isFinite(s.end)
+        typeof (s as Record<string, unknown>)['start'] === 'number' &&
+        Number.isFinite((s as Record<string, unknown>)['start']) &&
+        typeof (s as Record<string, unknown>)['end'] === 'number' &&
+        Number.isFinite((s as Record<string, unknown>)['end'])
     )
 
   return hasPath && hasLines && hasLineNumber && hasSubmatches
@@ -69,11 +67,11 @@ export class RgContextBuilder {
     if (terms.length === 0) return ok([])
 
     const rgPathResult = await getRgPath()
-    if (rgPathResult.isErr()) return err(rgPathResult.error)
+    if (rgPathResult.isErr()) return err(new RgSearchError(rgPathResult.error.message))
 
     const args = this._buildSearchArgs(terms, [this._cwd])
     const runResult = await runRg(rgPathResult.value, this._cwd, args)
-    if (runResult.isErr()) return err(runResult.error)
+    if (runResult.isErr()) return err(new RgSearchError(runResult.error.message))
 
     const parsedResult = this._parseSearchOutput(runResult.value)
     if (parsedResult.isErr()) return err(parsedResult.error)
@@ -96,11 +94,11 @@ export class RgContextBuilder {
     if (uniqueCandidates.length === 0) return ok([])
 
     const rgPathResult = await getRgPath()
-    if (rgPathResult.isErr()) return err(rgPathResult.error)
+    if (rgPathResult.isErr()) return err(new RgSearchError(rgPathResult.error.message))
 
     const args = this._buildSearchArgs(terms, uniqueCandidates)
     const runResult = await runRg(rgPathResult.value, this._cwd, args)
-    if (runResult.isErr()) return err(runResult.error)
+    if (runResult.isErr()) return err(new RgSearchError(runResult.error.message))
 
     const parsedResult = this._parseSearchOutput(runResult.value)
     if (parsedResult.isErr()) return err(parsedResult.error)
@@ -140,7 +138,6 @@ export class RgContextBuilder {
     run: Readonly<{
       stdout: string
       stderr: string
-      // eslint-disable-next-line @typescript-eslint/no-restricted-types
       exitCode: number | null
     }>
   ): ResultType<RgRawBestMatch[], RgSearchError> {
@@ -152,7 +149,7 @@ export class RgContextBuilder {
 
     return Result.fromThrowable(
       () => this._parseRgJson(stdout),
-      (error) => new RgSearchError('Failed to parse ripgrep output', error as Error)
+      (error) => new RgSearchError('Failed to parse ripgrep output', error instanceof Error ? error : new Error(String(error)))
     )()
   }
 

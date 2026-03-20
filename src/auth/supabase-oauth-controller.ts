@@ -2,10 +2,10 @@ import * as vscode from 'vscode'
 import { createClient } from '@supabase/supabase-js'
 import { err, ok, ResultAsync, type Result } from 'neverthrow'
 import { type JsonParseError, safeJsonParse } from '@babadeluxe/shared/utils'
+import type { GrowthBook } from '@growthbook/growthbook'
 import { parseOAuthCallbackUriString } from './auth-callback-parser.js'
 import type { SupabaseSessionPayload, ExtensionLogger, SupabaseConfiguration } from './types.js'
 import { SignInError } from './errors.js'
-import type { GrowthBook } from '@growthbook/growthbook'
 
 type SupabaseClientType = ReturnType<typeof createClient>
 

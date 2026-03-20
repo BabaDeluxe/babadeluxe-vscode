@@ -1,17 +1,17 @@
 import * as vscode from 'vscode'
 import { ok, err, type Result } from 'neverthrow'
 import { ref, useWebviewView, watchEffect, onScopeDispose } from 'reactive-vscode'
-import { loadAndProcessHtml } from './csp-helper.js'
+import type { GrowthBook } from '@growthbook/growthbook'
+import { loadAndProcessHtml, detectDevelopmentMode } from './csp-helper.js'
 import { logger } from '../infra/logger.js'
 import { ContextPinsStore } from '../context/context-pins-store.js'
 import { WebviewPinsController, type PostStatus } from './webview-pins-controller.js'
 import { useWebviewCommon } from './use-webview-common.js'
 import { WebviewAuthController } from '../auth/webview-auth-controller.js'
-import type { SupabaseOAuthController } from '../auth/supabase-oauth-controller.js'
+import { type SupabaseOAuthController } from '../auth/supabase-oauth-controller.js'
 import { SidebarWebviewNotReadyError } from './errors.js'
 import { createContextRootState } from '../context/context-root-state.js'
 import { isRecord, isWebviewMessage } from '../infra/type-guards.js'
-import { detectDevelopmentMode } from './csp-helper.js'
 
 export type SidebarApi = Readonly<{
   postMessageToSidebar: (
@@ -25,7 +25,7 @@ export function useBabaSidebarView(parameters: {
   context: vscode.ExtensionContext
   extensionUri: vscode.Uri
   supabaseOAuthController: SupabaseOAuthController
-  gb: import('@growthbook/growthbook').GrowthBook
+  gb: GrowthBook
 }): SidebarApi {
   logger.log('[sidebar-init] 1. useBabaSidebarView called')
 
@@ -104,7 +104,7 @@ export function useBabaSidebarView(parameters: {
 
     logger.log('[sidebar-watch] 7f. Starting development mode check')
     void (async () => {
-      const { isDevelopmentMode, webviewDevServerUrl } = detectDevelopmentMode()
+      const { isDevelopmentMode, webviewDevServerUrl } = detectDevelopmentMode(parameters.context)
 
       if (!isDevelopmentMode) {
         logger.log('[sidebar-watch] 7g. Not in dev mode, skipping HTML reload')
@@ -216,17 +216,4 @@ export function useBabaSidebarView(parameters: {
 
   logger.log('[sidebar-init] 10. Sidebar initialization complete, returning API')
   return cachedSidebarApi
-
-  function detectDevelopmentMode() {
-    const isDevelopmentMode = parameters.context.extensionMode === vscode.ExtensionMode.Development
-    const webviewDevServerUrl = isDevelopmentMode ? 'http://127.0.0.1:5100' : undefined
-
-    if (isDevelopmentMode) {
-      logger.log(`[sidebar-dev] Development mode enabled, dev server: ${webviewDevServerUrl}`)
-    } else {
-      logger.warn('[sidebar-dev] Production mode (no dev server)')
-    }
-
-    return { isDevelopmentMode, webviewDevServerUrl }
-  }
 }

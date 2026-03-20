@@ -5,10 +5,10 @@ import type {
   ContextUnpinFileMessage,
   PinFileMessage,
   PinSnippetMessage,
-  UiTextRange,
   WebviewMessage,
 } from './types.js'
 import type { ContextPinsStore } from '../context/context-pins-store.js'
+import type { UiTextRange } from '../scoring/types.js'
 
 export type PostStatus = Readonly<{ kind: 'posted' } | { kind: 'queued' }>
 
@@ -82,7 +82,7 @@ export class WebviewPinsController {
     if (isPinFileMessage(message)) {
       await this._pinsStore.upsertFilePin(rootKey, message.filePath)
       await this._maybePostSnapshot()
-      return this._webview && this._isReady ? { kind: 'posted' } : { kind: 'queued' }
+      return (this._webview && this._isReady) ? { kind: 'posted' } : { kind: 'queued' }
     }
 
     if (isPinSnippetMessage(message)) {
@@ -93,7 +93,7 @@ export class WebviewPinsController {
         range: message.range,
       })
       await this._maybePostSnapshot()
-      return this._webview && this._isReady ? { kind: 'posted' } : { kind: 'queued' }
+      return (this._webview && this._isReady) ? { kind: 'posted' } : { kind: 'queued' }
     }
 
     if (!this._webview) return { kind: 'queued' }
@@ -133,6 +133,6 @@ export class WebviewPinsController {
     await this._pinsStore.migrateLegacyToRoot()
 
     const snapshot: ContextSnapshotMessage = this._pinsStore.readSnapshot(rootKey)
-    await this._webview.postMessage(snapshot)
+    void this._webview.postMessage(snapshot)
   }
 }

@@ -1,7 +1,11 @@
-import type { WebviewMessage } from './types.js'
+import { type WebviewMessage } from '../webview/types.js'
 
-export const isRecord = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null
+}
 
-export const isWebviewMessage = (value: unknown): value is WebviewMessage =>
-  isRecord(value) && typeof value['type'] === 'string'
+export function isWebviewMessage(value: unknown): value is WebviewMessage {
+  if (!isRecord(value)) return false
+  const maybeMessage = value as Record<string, unknown>
+  return typeof maybeMessage['type'] === 'string'
+}

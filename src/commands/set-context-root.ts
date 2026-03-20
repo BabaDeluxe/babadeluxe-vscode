@@ -13,25 +13,25 @@ export const setContextRootManifest: CommandManifest = {
 
 export class SetContextRootCommand implements ExtensionCommand {
   async run(dependencies: CommandDependencies): Promise<void> {
-    const { context, logger, vscode, gb } = dependencies
+    const { context, logger, vscode: vscodeApi, gb } = dependencies
 
     logger.log('[command] setContextRoot called')
 
-    if (!isWorkspaceOpen(vscode)) {
-      void vscode.window.showWarningMessage(
+    if (!isWorkspaceOpen(vscodeApi)) {
+      void vscodeApi.window.showWarningMessage(
         'Open a workspace to save a context root. Outside a workspace, Baba uses the active file folder for manual context.'
       )
       return
     }
 
-    const defaultUri = vscode.workspace.workspaceFolders?.[0]?.uri
+    const defaultUri = vscodeApi.workspace.workspaceFolders?.[0]?.uri
     if (!defaultUri) {
-      void vscode.window.showWarningMessage('No workspace folder found.')
+      void vscodeApi.window.showWarningMessage('No workspace folder found.')
       return
     }
 
     const uri = await pickFolderUri({
-      vscode,
+      vscode: vscodeApi,
       title: 'Select context root folder',
       openLabel: 'Use folder',
       defaultUri,
@@ -48,6 +48,6 @@ export class SetContextRootCommand implements ExtensionCommand {
 
     gb.track('set-context-root-success', { path: uri.fsPath })
 
-    void vscode.window.showInformationMessage('Context root saved for this workspace.')
+    void vscodeApi.window.showInformationMessage('Context root saved for this workspace.')
   }
 }

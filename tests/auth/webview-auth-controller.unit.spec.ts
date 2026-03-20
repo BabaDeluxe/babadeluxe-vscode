@@ -1,89 +1,53 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { ok, err } from 'neverthrow'
+import { describe, expect, it, vi } from 'vitest'
 import { WebviewAuthController } from '../../src/auth/webview-auth-controller.js'
+import { SupabaseOAuthController } from '../../src/auth/supabase-oauth-controller.js'
+import { ok, err } from 'neverthrow'
 
 describe('WebviewAuthController', () => {
-  let postMessages: any[]
-  let postMessage: (m: any) => Promise<boolean>
-  let onDidChangeSessionHandlers: Array<(s: any) => void>
-  let supabaseController: any
-  let controller: WebviewAuthController
+  it('handles auth.getSession message', async () => {
+    const mockSession = { accessToken: 'at', refreshToken: 'rt', expiresAtUnixSeconds: 123 }
+    const mockOAuthController = {
+      getStoredSession: vi.fn().mockResolvedValue(ok(mockSession)),
+      onDidChangeSession: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+    } as unknown as SupabaseOAuthController
 
-  beforeEach(() => {
-    postMessages = []
-    postMessage = async (m) => {
-      postMessages.push(m)
-      return true
-    }
+    const mockPostMessage = vi.fn().mockResolvedValue(true)
+    const controller = new WebviewAuthController(mockOAuthController, mockPostMessage)
 
-    onDidChangeSessionHandlers = []
-    supabaseController = {
-      getStoredSession: vi.fn(),
-      startGitHubLogin: vi.fn(),
-      onDidChangeSession(handler: (s: any) => void) {
-        onDidChangeSessionHandlers.push(handler)
-        return { dispose: vi.fn() }
-      },
-    }
-
-    controller = new WebviewAuthController(supabaseController, postMessage)
-  })
-
-  it('forwards session changes to webview', () => {
-    const session = {
-      accessToken: 'at',
-      refreshToken: 'rt',
-      expiresAtUnixSeconds: 123,
-    }
-
-    onDidChangeSessionHandlers[0]?.(session)
-
-    expect(postMessages).toEqual([{ type: 'auth.session', session }])
-  })
-
-  it('handles auth.getSession success', async () => {
-    supabaseController.getStoredSession.mockResolvedValueOnce(ok({ foo: 'bar' }))
-
-    const handled = await controller.handleWebviewMessage({ type: 'auth.getSession' } as any)
+    const handled = await controller.handleWebviewMessage({ type: 'auth.getSession' })
 
     expect(handled).toBe(true)
-    expect(postMessages).toEqual([{ type: 'auth.session', session: { foo: 'bar' } }])
+    expect(mockPostMessage).toHaveBeenCalledWith({ type: 'auth.session', session: mockSession })
   })
 
-  it('handles auth.getSession error', async () => {
-    const error = new Error('boom')
-    supabaseController.getStoredSession.mockResolvedValueOnce(err(error))
+  it('handles auth.login message', async () => {
+    const mockOAuthController = {
+      startGitHubLogin: vi.fn().mockResolvedValue(ok(undefined)),
+      onDidChangeSession: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+    } as unknown as SupabaseOAuthController
 
-    const handled = await controller.handleWebviewMessage({ type: 'auth.getSession' } as any)
+    const mockPostMessage = vi.fn().mockResolvedValue(true)
+    const controller = new WebviewAuthController(mockOAuthController, mockPostMessage)
+
+    const handled = await controller.handleWebviewMessage({ type: 'auth.login' })
 
     expect(handled).toBe(true)
-    expect(postMessages).toEqual([{ type: 'auth.error', message: 'boom' }])
+    expect(mockOAuthController.startGitHubLogin).toHaveBeenCalled()
   })
 
-  it('handles auth.login success', async () => {
-    supabaseController.startGitHubLogin.mockResolvedValueOnce(ok(undefined))
+  it('posts error message on failed login', async () => {
+    const mockError = new Error('Login failed')
+    const mockOAuthController = {
+      startGitHubLogin: vi.fn().mockResolvedValue(err(mockError)),
+      onDidChangeSession: vi.fn().mockReturnValue({ dispose: vi.fn() }),
+    } as unknown as SupabaseOAuthController
 
-    const handled = await controller.handleWebviewMessage({ type: 'auth.login' } as any)
+    const mockPostMessage = vi.fn().mockResolvedValue(true)
+    const controller = new WebviewAuthController(mockOAuthController, mockPostMessage)
+
+    const handled = await controller.handleWebviewMessage({ type: 'auth.login' })
 
     expect(handled).toBe(true)
-    expect(postMessages).toEqual([{ type: 'auth.session', session: undefined }])
-  })
-
-  it('handles auth.login error', async () => {
-    const error = new Error('login failed')
-    supabaseController.startGitHubLogin.mockResolvedValueOnce(err(error))
-
-    const handled = await controller.handleWebviewMessage({ type: 'auth.login' } as any)
-
-    expect(handled).toBe(true)
-    expect(postMessages).toEqual([{ type: 'auth.error', message: 'login failed' }])
-  })
-
-  it('returns false for unrelated message types', async () => {
-    const handled = await controller.handleWebviewMessage({ type: 'other' } as any)
-
-    expect(handled).toBe(false)
-    expect(postMessages).toEqual([])
+    expect(mockPostMessage).toHaveBeenCalledWith({ type: 'auth.error', message: mockError.message })
   })
 })

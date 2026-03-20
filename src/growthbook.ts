@@ -1,3 +1,4 @@
+import process from 'node:process'
 import * as vscode from 'vscode'
 import { GrowthBook } from '@growthbook/growthbook'
 
@@ -13,7 +14,7 @@ export function initGrowthBook() {
       id: vscode.env.machineId,
       language: vscode.env.language,
       version: vscode.version,
-      app: 'vscode-extension'
+      app: 'vscode-extension',
     },
     trackingCallback: (experiment, result) => {
       // In a real scenario, this would send data to an analytics provider

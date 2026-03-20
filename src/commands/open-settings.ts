@@ -11,11 +11,11 @@ export const openSettingsManifest: CommandManifest = {
 
 export class OpenSettingsCommand implements ExtensionCommand {
   async run(dependencies: CommandDependencies): Promise<void> {
-    const { logger, sidebar, vscode, gb } = dependencies
+    const { logger, sidebar, vscode: vscodeApi, gb } = dependencies
 
     logger.log('[command] openSettings called - focusing sidebar and sending navigation message')
 
-    await vscode.commands.executeCommand('babadeluxe-ai-coder-chat.focus')
+    await vscodeApi.commands.executeCommand('babadeluxe-ai-coder-chat.focus')
 
     const result = await sidebar.postMessageToSidebar({
       type: 'navigate-to',

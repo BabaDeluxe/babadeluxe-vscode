@@ -1,74 +1,34 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
+import * as fs from 'node:fs/promises'
+import { getRgPath } from '../../src/ripgrep/rg-wrapper.js'
 
-// Base mocks for success case
-vi.mock('node:module', () => ({
-  createRequire: () => () => ({ rgPath: '/mock/rg.exe' }),
+vi.mock('node:fs/promises', () => ({
+  stat: vi.fn(),
 }))
 
-vi.mock('node:fs', () => ({
-  existsSync: () => true,
+vi.mock('@vscode/ripgrep', () => ({
+  default: { rgPath: '/mock/rg' },
 }))
 
 describe('getRgPath', () => {
-  beforeEach(() => {
-    vi.clearAllMocks()
-    vi.resetModules()
-  })
-
-  afterEach(() => {
-    vi.restoreAllMocks()
-  })
-
-  it('returns Ok when ripgrep path resolves and exists', async () => {
-    const { getRgPath: freshGetRgPath } = await import('../src/rg-wrapper.js')
-    const result = await freshGetRgPath()
-
+  it('returns path if it exists and is a file', async () => {
+    vi.mocked(fs.stat).mockResolvedValue({ isFile: () => true } as any)
+    const result = await getRgPath()
     expect(result.isOk()).toBe(true)
-    expect(result._unsafeUnwrap()).toBe('/mock/rg.exe')
+    if (result.isOk()) {
+      expect(result.value).toBe('/mock/rg')
+    }
   })
 
-  it('returns Err when require throws', async () => {
-    vi.doMock('node:module', () => ({
-      createRequire: () => () => {
-        throw new Error('boom')
-      },
-    }))
-
-    const { getRgPath: failingGetRgPath } = await import('../src/rg-wrapper.js')
-    const result = await failingGetRgPath()
-
+  it('returns error if path is not a file', async () => {
+    vi.mocked(fs.stat).mockResolvedValue({ isFile: () => false } as any)
+    const result = await getRgPath()
     expect(result.isErr()).toBe(true)
-    const error = result._unsafeUnwrapErr()
-    expect(error).toBeInstanceOf(Error)
   })
 
-  it('returns Err when export shape is invalid', async () => {
-    vi.doMock('node:module', () => ({
-      createRequire: () => () => ({}), // No rgPath
-    }))
-
-    const { getRgPath: badShapeGetRgPath } = await import('../src/rg-wrapper.js')
-    const result = await badShapeGetRgPath()
-
+  it('returns error if stat fails', async () => {
+    vi.mocked(fs.stat).mockRejectedValue(new Error('stat failed'))
+    const result = await getRgPath()
     expect(result.isErr()).toBe(true)
-    const error = result._unsafeUnwrapErr()
-    expect(error).toBeInstanceOf(Error)
-  })
-
-  it('returns Err when resolved path does not exist', async () => {
-    vi.doMock('node:module', () => ({
-      createRequire: () => () => ({ rgPath: '/missing/rg.exe' }),
-    }))
-
-    vi.doMock('node:fs', () => ({
-      existsSync: () => false,
-    }))
-
-    const { getRgPath: missingGetRgPath } = await import('../src/rg-wrapper.js')
-    const result = await missingGetRgPath()
-
-    expect(result.isErr()).toBe(true)
-    const error = result._unsafeUnwrapErr()
-    expect(error).toBeInstanceOf(Error)
   })
 })

@@ -1,7 +1,7 @@
 import { Buffer } from 'node:buffer'
 import { randomBytes } from 'node:crypto'
-import { type Result, err, ok } from 'neverthrow'
 import * as vscode from 'vscode'
+import { type Result, err, ok } from 'neverthrow'
 import { logger } from '../infra/logger.js'
 import { InitializationError } from './errors.js'
 
@@ -10,6 +10,19 @@ type LoadHtmlOptions = {
   webview: vscode.Webview
   isDevelopmentMode: boolean
   webviewDevServerUrl: string | undefined
+}
+
+export function detectDevelopmentMode(context: vscode.ExtensionContext) {
+  const isDevelopmentMode = context.extensionMode === vscode.ExtensionMode.Development
+  const webviewDevServerUrl = isDevelopmentMode ? 'http://127.0.0.1:5100' : undefined
+
+  if (isDevelopmentMode) {
+    logger.log(`[sidebar-dev] Development mode enabled, dev server: ${webviewDevServerUrl}`)
+  } else {
+    logger.warn('[sidebar-dev] Production mode (no dev server)')
+  }
+
+  return { isDevelopmentMode, webviewDevServerUrl }
 }
 
 export async function loadAndProcessHtml(options: LoadHtmlOptions): Promise<string> {
@@ -87,8 +100,8 @@ async function buildDevelopmentHtml(
         )
 
     return ok(html)
-  } catch (unknownError) {
-    return err(new InitializationError('Failed to load dev webview HTML', unknownError))
+  } catch (unknownError: unknown) {
+    return err(new InitializationError('Failed to load dev webview HTML', unknownError instanceof Error ? unknownError : new Error(String(unknownError))))
   }
 }
 
@@ -149,7 +162,7 @@ async function buildProductionHtml(
     html = html.replaceAll('<script', `<script nonce="${nonce}"`)
 
     return ok(html)
-  } catch (unknownError) {
-    return err(new InitializationError('Failed to load production webview HTML', unknownError))
+  } catch (unknownError: unknown) {
+    return err(new InitializationError('Failed to load production webview HTML', unknownError instanceof Error ? unknownError : new Error(String(unknownError))))
   }
 }

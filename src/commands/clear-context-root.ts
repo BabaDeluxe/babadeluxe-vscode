@@ -13,12 +13,12 @@ export const clearContextRootManifest: CommandManifest = {
 
 export class ClearContextRootCommand implements ExtensionCommand {
   async run(dependencies: CommandDependencies): Promise<void> {
-    const { context, logger, vscode, gb } = dependencies
+    const { context, logger, vscode: vscodeApi, gb } = dependencies
 
     logger.log('[command] clearContextRoot called')
 
-    if (!isWorkspaceOpen(vscode)) {
-      void vscode.window.showInformationMessage('No workspace open; nothing to clear.')
+    if (!isWorkspaceOpen(vscodeApi)) {
+      void vscodeApi.window.showInformationMessage('No workspace open; nothing to clear.')
       return
     }
 
@@ -27,6 +27,6 @@ export class ClearContextRootCommand implements ExtensionCommand {
 
     gb.track('clear-context-root-success')
 
-    void vscode.window.showInformationMessage('Context root cleared for this workspace.')
+    void vscodeApi.window.showInformationMessage('Context root cleared for this workspace.')
   }
 }

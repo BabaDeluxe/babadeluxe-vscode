@@ -2,15 +2,16 @@ import * as path from 'node:path'
 import { randomUUID } from 'node:crypto'
 import { ok, err, type Result } from 'neverthrow'
 import { type Ref, useActiveTextEditor, useVisibleTextEditors, computed } from 'reactive-vscode'
+import type { GrowthBook } from '@growthbook/growthbook'
 import type { RgContextBuilder } from './rg-context-builder.js'
-import type { UiContextItem, TextRange } from './types.js'
+import type { UiContextItem } from './types.js'
 import { ContextBuildError } from './errors.js'
 import { logger } from '../infra/logger.js'
 import type { Bm25IndexService } from '../bm25/bm25-index-service.js'
 import { useGitRecencyMap } from '../git/use-git-recency-map.js'
 import { useRecentFiles } from '../scoring/use-recent-files.js'
 import { type ScoringContext, useContextScorer } from '../scoring/use-scoring-context.js'
-import type { GrowthBook } from '@growthbook/growthbook'
+import { type TextRange } from '../scoring/types.js'
 
 type ScoredCandidate = {
   filePath: string
@@ -75,7 +76,7 @@ export class AutoContextHandler {
   ): UiContextItem[] {
     const candidateMap = new Map<string, ScoredCandidate>()
 
-    const maxBm25 = bm25Candidates.length > 0 ? bm25Candidates[0]!.score : 1
+    const maxBm25 = bm25Candidates.length > 0 ? (bm25Candidates[0]?.score ?? 1) : 1
     for (const c of bm25Candidates) {
       const absPath = this._resolvePath(c.filePath)
       candidateMap.set(absPath, {

@@ -8,12 +8,14 @@ import { JsonParseError, safeJsonParse } from '@babadeluxe/shared/utils'
 // @ts-expect-error No declaration file
 import bm25, { type WinkBm25Engine } from 'wink-bm25-text-search'
 import { pickAdaptiveScoredCandidates } from '../scoring/adaptive-candidates.js'
-import { type EngineWithMapping, type ScoredCandidate } from './types.js'
+import { type EngineWithMapping } from './types.js'
 import { IndexStorage } from './index-storage.js'
 import { extractSearchTerms } from '../scoring/search-term-extractor.js'
 import { logger } from '../infra/logger.js'
 import { listIndexableFiles } from '../ripgrep/rg-file-lister.js'
-import { Bm25IndexConsolidationError, FileReadError } from './errors.js'
+import { Bm25IndexConsolidationError } from './errors.js'
+import { FileReadError } from '../infra/fs-utils.js'
+import { type ScoredCandidate } from '../scoring/types.js'
 
 export class Bm25IndexService {
   private _engine?: WinkBm25Engine
