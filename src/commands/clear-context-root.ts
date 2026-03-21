@@ -1,4 +1,4 @@
-import { clearSelectedContextRootFsPath } from '../context/context-root-storage.js'
+import { clearSelectedContextRootFsPath } from '../context/storage.js'
 import { isWorkspaceOpen } from './helper.js'
 import type { CommandDependencies, CommandManifest, ExtensionCommand } from './types.js'
 

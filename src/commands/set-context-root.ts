@@ -1,4 +1,4 @@
-import { setSelectedContextRootFsPath } from '../context/context-root-storage.js'
+import { setSelectedContextRootFsPath } from '../context/storage.js'
 import { isWorkspaceOpen, pickFolderUri } from './helper.js'
 import type { CommandDependencies, CommandManifest, ExtensionCommand } from './types.js'
 

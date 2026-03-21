@@ -1,3 +1,4 @@
+import { type ScoredCandidate } from '../scoring/types.js'
 // @ts-expect-error No declaration file
 import { type WinkBm25Engine } from 'wink-bm25-text-search'
 
@@ -14,10 +15,3 @@ export type Bm25IndexServiceLike = Readonly<{
   rebuildInBackground: () => Promise<unknown>
   searchAdaptiveCandidates: (query: string) => ScoredCandidate[]
 }>
-
-export type Bm25RuntimeHandle = Readonly<{
-  bm25IndexService: Bm25IndexServiceLike
-  dispose: () => void
-}>
-
-import { ScoredCandidate } from '../scoring/types.js'

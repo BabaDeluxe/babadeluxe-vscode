@@ -2,7 +2,7 @@ import { Buffer } from 'node:buffer'
 import { randomBytes } from 'node:crypto'
 import * as vscode from 'vscode'
 import { type Result, err, ok } from 'neverthrow'
-import { logger } from '../infra/logger.js'
+import { logger } from '../system/log.js'
 import { InitializationError } from './errors.js'
 
 type LoadHtmlOptions = {

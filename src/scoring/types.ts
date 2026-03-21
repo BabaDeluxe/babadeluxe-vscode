@@ -22,11 +22,6 @@ export type UiTextRange = Readonly<{
 
 export type TextRange = UiTextRange
 
-export type FileSignalProvider = {
-  getSignalsForFile(filePath: string): FileSignals
-  listHotFilePaths(): readonly string[]
-}
-
 export type SearchTermKind = 'phrase' | 'token'
 
 export type SearchTerm = Readonly<{

@@ -1,7 +1,7 @@
 import process from 'node:process'
 import PQueue from 'p-queue'
-import { maxFolderPinFiles } from '../infra/constants.js'
-import { scanFolderForIndexableFiles } from '../infra/fs-utils.js'
+import { maxFolderPinFiles } from '../system/constants.js'
+import { scanFolderForIndexableFiles } from '../system/fs.js'
 import type { CommandDependencies, CommandManifest, ExtensionCommand } from './types.js'
 import { isQueuedPostStatus, pickFolderUri, showQueuedContextNotice, toUri } from './helper.js'
 
