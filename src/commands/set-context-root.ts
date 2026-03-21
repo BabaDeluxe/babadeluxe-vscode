@@ -18,7 +18,7 @@ export class SetContextRootCommand implements ExtensionCommand {
     logger.log('[command] setContextRoot called')
 
     if (!isWorkspaceOpen(vscodeApi)) {
-      void vscodeApi.window.showWarningMessage(
+      void vscode.window.showWarningMessage(
         'Open a workspace to save a context root. Outside a workspace, Baba uses the active file folder for manual context.'
       )
       return
@@ -26,7 +26,7 @@ export class SetContextRootCommand implements ExtensionCommand {
 
     const defaultUri = vscodeApi.workspace.workspaceFolders?.[0]?.uri
     if (!defaultUri) {
-      void vscodeApi.window.showWarningMessage('No workspace folder found.')
+      void vscode.window.showWarningMessage('No workspace folder found.')
       return
     }
 
@@ -39,15 +39,15 @@ export class SetContextRootCommand implements ExtensionCommand {
 
     if (!uri) {
       logger.log('[command] setContextRoot cancelled by user')
-      gb.track('set-context-root-cancelled')
+      void gb.track('set-context-root-cancelled')
       return
     }
 
     await setSelectedContextRootFsPath(context, uri.fsPath)
     logger.log('[command] Context root saved in workspaceState:', uri.fsPath)
 
-    gb.track('set-context-root-success', { path: uri.fsPath })
+    void gb.track('set-context-root-success', { path: uri.fsPath })
 
-    void vscodeApi.window.showInformationMessage('Context root saved for this workspace.')
+    void vscode.window.showInformationMessage('Context root saved for this workspace.')
   }
 }

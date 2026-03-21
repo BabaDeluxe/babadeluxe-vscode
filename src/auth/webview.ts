@@ -35,9 +35,11 @@ export class WebviewAuthController implements vscode.Disposable {
   public async handleWebviewMessage(message: WebviewMessage): Promise<boolean> {
     if (isAuthGetSessionMessage(message)) {
       const sessionResult = await this._supabaseOAuthController.getStoredSession()
-      await (sessionResult.isErr()
-        ? this._postMessage({ type: 'auth.error', message: sessionResult.error.message })
-        : this._postMessage({ type: 'auth.session', session: sessionResult.value }))
+      if (sessionResult.isErr()) {
+        void this._postMessage({ type: 'auth.error', message: sessionResult.error.message })
+      } else {
+        void this._postMessage({ type: 'auth.session', session: sessionResult.value })
+      }
 
       return true
     }
@@ -46,10 +48,10 @@ export class WebviewAuthController implements vscode.Disposable {
       const loginResult = await this._supabaseOAuthController.startGitHubLogin()
       if (loginResult.isErr()) {
         logger.warn('startGitHubLogin failed:', loginResult.error)
-        await this._postMessage({ type: 'auth.error', message: loginResult.error.message })
+        void this._postMessage({ type: 'auth.error', message: loginResult.error.message })
       } else {
         // Session arrives later via onDidChangeSession after OAuth callback completes.
-        await this._postMessage({ type: 'auth.session', session: undefined })
+        void this._postMessage({ type: 'auth.session', session: undefined })
       }
 
       return true

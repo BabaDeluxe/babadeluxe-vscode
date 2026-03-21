@@ -59,7 +59,7 @@ export class AddFolderToContextCommand implements ExtensionCommand {
     if (scanResult.isErr()) {
       logger.error('[command] Folder scan failed:', scanResult.error)
       void vscodeApi.window.showErrorMessage('Failed to scan folder.')
-      gb.track('add-folder-scan-failed', { error: scanResult.error.message })
+      voidvoid gb.track('add-folder-scan-failed', { error: scanResult.error.message })
       return
     }
 
@@ -68,7 +68,7 @@ export class AddFolderToContextCommand implements ExtensionCommand {
 
     if (scan.fileUris.length === 0) {
       void vscodeApi.window.showInformationMessage('No indexable files found in folder.')
-      gb.track('add-folder-empty', { folderPath: effectiveFolderUri.fsPath })
+      voidvoid gb.track('add-folder-empty', { folderPath: effectiveFolderUri.fsPath })
       return
     }
 
@@ -80,7 +80,7 @@ export class AddFolderToContextCommand implements ExtensionCommand {
         'Cancel'
       )
       if (choice !== 'Pin folder') {
-        gb.track('add-folder-cancelled-depth', { depth: scan.maxDepth })
+        voidvoid gb.track('add-folder-cancelled-depth', { depth: scan.maxDepth })
         return
       }
     }
@@ -93,7 +93,7 @@ export class AddFolderToContextCommand implements ExtensionCommand {
         'Cancel'
       )
       if (choice !== `Pin ${maxFolderPinFiles}`) {
-        gb.track('add-folder-cancelled-capped', { count: scan.fileUris.length })
+        voidvoid gb.track('add-folder-cancelled-capped', { count: scan.fileUris.length })
         return
       }
     }
@@ -122,7 +122,7 @@ export class AddFolderToContextCommand implements ExtensionCommand {
     await Promise.race([queue.onIdle()])
     await Promise.allSettled(taskPromises)
 
-    gb.track('add-folder-success', {
+    voidvoid gb.track('add-folder-success', {
       folderPath: effectiveFolderUri.fsPath,
       fileCount: fileUris.length
     })

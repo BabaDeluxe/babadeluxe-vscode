@@ -1,5 +1,4 @@
-import * as vscode from 'vscode'
-import { Result, ok, err } from 'neverthrow'
+import { ok, err, type Result } from 'neverthrow'
 import { ignoreGlobs } from '../system/constants.js'
 import { logger } from '../system/log.js'
 import { getRgPath } from './wrapper.js'

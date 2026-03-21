@@ -25,7 +25,7 @@ export class ClearContextRootCommand implements ExtensionCommand {
     await clearSelectedContextRootFsPath(context)
     logger.log('[command] Context root cleared from workspaceState')
 
-    gb.track('clear-context-root-success')
+    void gb.track('clear-context-root-success')
 
     void vscodeApi.window.showInformationMessage('Context root cleared for this workspace.')
   }

@@ -55,7 +55,7 @@ export class AddSelectionToContextCommand implements ExtensionCommand {
     if (selectionResult.isErr()) {
       logger.error('[command] Failed to get selection:', selectionResult.error)
       void vscodeApi.window.showErrorMessage(selectionResult.error.message)
-      gb.track('add-selection-failed', { error: selectionResult.error.message })
+      void gb.track('add-selection-failed', { error: selectionResult.error.message })
       return
     }
 
@@ -72,11 +72,11 @@ export class AddSelectionToContextCommand implements ExtensionCommand {
     if (postResult.isErr()) {
       logger.error('[command] Failed to add snippet to context:', postResult.error)
       void vscodeApi.window.showErrorMessage('Failed to add context.')
-      gb.track('add-selection-post-failed', { error: postResult.error.message })
+      void gb.track('add-selection-post-failed', { error: postResult.error.message })
       return
     }
 
-    gb.track('add-selection-success', {
+    void gb.track('add-selection-success', {
       filePath: selectionResult.value.filePath,
       snippetLength: selectionResult.value.snippet.length
     })

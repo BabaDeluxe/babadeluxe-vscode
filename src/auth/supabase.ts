@@ -44,18 +44,18 @@ export class SupabaseOAuthController implements vscode.Disposable {
   }
 
   public readonly startGitHubLogin = async (): Promise<Result<void, Error>> => {
-    this._gb?.track('auth-login-started', { provider: 'github' })
+    void this._gb?.track('auth-login-started', { provider: 'github' })
 
     const configurationResult = this._getSupabaseConfiguration()
     if (configurationResult.isErr()) {
-      this._gb?.track('auth-login-failed', { reason: 'config_error' })
+      void this._gb?.track('auth-login-failed', { reason: 'config_error' })
       return err(configurationResult.error)
     }
 
     const extensionId = this._extensionContext.extension.id
     const callbackUriResult = await this._getCallbackUri(extensionId)
     if (callbackUriResult.isErr()) {
-      this._gb?.track('auth-login-failed', { reason: 'callback_uri_error' })
+      void this._gb?.track('auth-login-failed', { reason: 'callback_uri_error' })
       return err(callbackUriResult.error)
     }
 
@@ -73,13 +73,13 @@ export class SupabaseOAuthController implements vscode.Disposable {
     )
 
     if (signInResult.isErr()) {
-      this._gb?.track('auth-login-failed', { reason: 'supabase_error', error: signInResult.error.message })
+      void this._gb?.track('auth-login-failed', { reason: 'supabase_error', error: signInResult.error.message })
       return err(signInResult.error)
     }
 
     const { data } = signInResult.value
     if (!data?.url) {
-      this._gb?.track('auth-login-failed', { reason: 'no_auth_url' })
+      void this._gb?.track('auth-login-failed', { reason: 'no_auth_url' })
       return err(new SignInError('Supabase signInWithOAuth did not return an auth URL'))
     }
 
@@ -89,7 +89,7 @@ export class SupabaseOAuthController implements vscode.Disposable {
     )
 
     if (openResult.isErr()) {
-      this._gb?.track('auth-login-failed', { reason: 'browser_open_error' })
+      void this._gb?.track('auth-login-failed', { reason: 'browser_open_error' })
       return err(openResult.error)
     }
 
@@ -100,14 +100,14 @@ export class SupabaseOAuthController implements vscode.Disposable {
     const parsedCallbackResult = parseOAuthCallbackUriString(uri.toString(true))
     if (parsedCallbackResult.isErr()) {
       this._logger.warn(`Failed to parse auth callback: ${parsedCallbackResult.error.message}`)
-      this._gb?.track('auth-callback-failed', { reason: 'parse_error', error: parsedCallbackResult.error.message })
+      void this._gb?.track('auth-callback-failed', { reason: 'parse_error', error: parsedCallbackResult.error.message })
       return ok(undefined)
     }
 
     const parsedCallback = parsedCallbackResult.value
 
     if (parsedCallback.kind === 'code') {
-      this._gb?.track('auth-callback-failed', { reason: 'pkce_not_supported' })
+      void this._gb?.track('auth-callback-failed', { reason: 'pkce_not_supported' })
       return err(
         new Error(
           'Received OAuth code but expected Implicit Flow tokens. PKCE is not supported in this context.'
@@ -131,7 +131,7 @@ export class SupabaseOAuthController implements vscode.Disposable {
     this._sessionEmitter.fire(sessionPayload)
 
     this._logger.log('OAuth success: Supabase session stored (implicit flow).')
-    this._gb?.track('auth-login-success', { flow: 'implicit' })
+    void this._gb?.track('auth-login-success', { flow: 'implicit' })
 
     return ok(undefined)
   }

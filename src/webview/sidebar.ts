@@ -81,7 +81,7 @@ export function useBabaSidebarView(parameters: {
 
     logger.log('[sidebar-watch] 7c. Creating authController')
     authController = new WebviewAuthController(parameters.supabaseOAuthController, (message) =>
-      webview.postMessage(message)
+      void webview.postMessage(message)
     )
 
     logger.log('[sidebar-watch] 7d. Attaching pinsController to webview')
@@ -209,7 +209,7 @@ export function useBabaSidebarView(parameters: {
       }
 
       logger.log('[sidebar-api] Forwarding generic message to webview')
-      await webview.postMessage(message)
+      void webview.postMessage(message)
       return ok(undefined)
     },
   }

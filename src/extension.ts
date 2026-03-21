@@ -29,7 +29,7 @@ const extension = defineExtension(async (context: vscode.ExtensionContext) => {
   watchEffect(async () => {
     const sessionResult = await supabaseOAuthController.getStoredSession()
     const isLoggedIn = sessionResult.isOk() && !!sessionResult.value
-    gb.setAttributes({
+    void gb.setAttributes({
       ...gb.getAttributes(),
       isLoggedIn,
     })

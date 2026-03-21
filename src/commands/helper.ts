@@ -10,7 +10,7 @@ export async function showQueuedContextNotice(options: {
   vscode: typeof import('vscode')
   openChat: () => Promise<unknown>
 }): Promise<void> {
-  const choice = await options.vscode.window.showInformationMessage(
+  const choice = await options.void vscode.window.showInformationMessage(
     'Context added. Open BabaDeluxe Chat to use it.',
     'Open Chat'
   )

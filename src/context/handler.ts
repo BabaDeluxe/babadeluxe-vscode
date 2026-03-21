@@ -59,7 +59,7 @@ export class AutoContextHandler {
 
     logger.log(`Built ${mergedCandidates.length} context references for query: "${query}" in ${duration}ms`)
 
-    this._gb?.track('auto-context-request', {
+    void this._gb?.track('auto-context-request', {
       queryLength: query.length,
       itemCount: mergedCandidates.length,
       durationMs: duration,

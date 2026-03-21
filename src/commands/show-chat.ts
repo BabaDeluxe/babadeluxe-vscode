@@ -10,7 +10,7 @@ export class ShowChatCommand implements ExtensionCommand {
   async run(dependencies: CommandDependencies): Promise<void> {
     const { logger, openChat, gb } = dependencies
     logger.log('[command] showChat called')
-    gb.track('show-chat-command')
+    void gb.track('show-chat-command')
     await openChat()
   }
 }

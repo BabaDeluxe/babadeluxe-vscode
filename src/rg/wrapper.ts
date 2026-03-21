@@ -1,4 +1,3 @@
-import * as path from 'node:path'
 import * as fs from 'node:fs/promises'
 import { err, ok, type Result } from 'neverthrow'
 import rg from '@vscode/ripgrep'

@@ -38,7 +38,7 @@ export class AddFileToContextCommand implements ExtensionCommand {
         'Yes', 'No'
       )
       if (confirm !== 'Yes') {
-        gb.track('add-file-cancelled', { filePath: uri.fsPath })
+        void gb.track('add-file-cancelled', { filePath: uri.fsPath })
         return
       }
     }
@@ -50,11 +50,11 @@ export class AddFileToContextCommand implements ExtensionCommand {
     if (postResult.isErr()) {
       logger.error('[command] Failed to add file to context:', postResult.error)
       void vscodeApi.window.showErrorMessage('Failed to add context.')
-      gb.track('add-file-failed', { error: postResult.error.message })
+      void gb.track('add-file-failed', { error: postResult.error.message })
       return
     }
 
-    gb.track('add-file-success', {
+    void gb.track('add-file-success', {
       filePath: uri.fsPath,
       isQueued: isQueuedPostStatus(postResult.value)
     })

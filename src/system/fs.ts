@@ -1,3 +1,4 @@
+import { Buffer } from 'node:buffer'
 import * as vscode from 'vscode'
 import { err, ok, type Result, ResultAsync } from 'neverthrow'
 import { ignoredDirectories, maxFolderPinFiles } from './constants.js'

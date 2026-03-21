@@ -16,7 +16,7 @@ export class GenerateCommitMessageCommand implements ExtensionCommand {
     logger.error('[command] git.generateCommitMessage is not implemented yet.')
     void vscodeApi.window.showErrorMessage('Generate Commit Message is not implemented yet.')
 
-    gb.track('generate-commit-message-not-implemented')
+    void gb.track('generate-commit-message-not-implemented')
 
     throw new Error('Not implemented: babadeluxe-ai-coder.git.generateCommitMessage')
   }

@@ -17,7 +17,7 @@ type OutputFormatData = Readonly<{
   context: string
 }>
 
-type LoggerMethod = (contextTag: string, message: string, ...args: any[]) => void
+type LoggerMethod = (contextTag: string, message: string, ...args: unknown[]) => void
 
 export class Logger {
   private readonly _output: vscode.OutputChannel
@@ -74,7 +74,8 @@ export class Logger {
       return
     }
 
-    ;(this._logger[metadata.colorinoLevel] as LoggerMethod)(`[${context}]`, message, ...args)
+    const method = this._logger[metadata.colorinoLevel] as LoggerMethod
+    method(`[${context}]`, message, ...args)
   }
 
   private _formatForOutputChannel(
@@ -102,12 +103,6 @@ export class Logger {
     try {
       Error.prepareStackTrace = (_, stack) => stack
 
-      // Adjusted stack index:
-      // 0: Error creation
-      // 1: _getCallerContext
-      // 2: _log
-      // 3: public log method (e.g., info/debug)
-      // 4: The actual caller
       const stack = new Error('Stack trace for caller detection')
         .stack as unknown as NodeJS.CallSite[]
 

@@ -3,7 +3,7 @@ import * as vscode from 'vscode'
 import { GrowthBook } from '@growthbook/growthbook'
 
 export function initGrowthBook() {
-  const clientKey = process.env.GROWTHBOOK_CLIENT_KEY ?? ''
+  const clientKey = process.env['GROWTHBOOK_CLIENT_KEY'] ?? ''
 
   const gb = new GrowthBook({
     apiHost: 'https://cdn.growthbook.io',
