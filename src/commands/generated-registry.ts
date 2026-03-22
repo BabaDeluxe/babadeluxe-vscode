@@ -8,17 +8,17 @@ export const commandRegistry: readonly LazyCommandEntry[] = [
   // add-file-to-context.ts
   {
     manifest: {
-  commandId: 'babadeluxe-ai-coder.context.addFileToBabaContext',
-  title: 'Add File to BabaContext™',
-  menus: {
-    'explorer/context': [
-      {
-        when: '!explorerResourceIsFolder',
-        group: 'navigation@50',
+      commandId: 'babadeluxe-ai-coder.context.addFileToBabaContext',
+      title: 'Add File to BabaContext™',
+      menus: {
+        'explorer/context': [
+          {
+            when: '!explorerResourceIsFolder',
+            group: 'navigation@50',
+          },
+        ],
       },
-    ],
-  },
-},
+    },
     load: async () => {
       const module = await import('./add-file-to-context.js')
       return module.AddFileToContextCommand
@@ -27,17 +27,17 @@ export const commandRegistry: readonly LazyCommandEntry[] = [
   // add-folder-to-context.ts
   {
     manifest: {
-  commandId: 'babadeluxe-ai-coder.context.addFolderToBabaContext',
-  title: 'Add Folder to BabaContext™',
-  menus: {
-    'explorer/context': [
-      {
-        when: 'explorerResourceIsFolder',
-        group: 'navigation@50',
+      commandId: 'babadeluxe-ai-coder.context.addFolderToBabaContext',
+      title: 'Add Folder to BabaContext™',
+      menus: {
+        'explorer/context': [
+          {
+            when: 'explorerResourceIsFolder',
+            group: 'navigation@50',
+          },
+        ],
       },
-    ],
-  },
-},
+    },
     load: async () => {
       const module = await import('./add-folder-to-context.js')
       return module.AddFolderToContextCommand
@@ -46,12 +46,12 @@ export const commandRegistry: readonly LazyCommandEntry[] = [
   // add-selection-to-context.ts
   {
     manifest: {
-  commandId: 'babadeluxe-ai-coder.context.addSelectionToBabaContext',
-  title: 'Add Code to BabaContext™',
-  menus: {
-    'editor/context': [{ when: 'editorHasSelection', group: 'navigation@50' }],
-  },
-},
+      commandId: 'babadeluxe-ai-coder.context.addSelectionToBabaContext',
+      title: 'Add Code to BabaContext™',
+      menus: {
+        'editor/context': [{ when: 'editorHasSelection', group: 'navigation@50' }],
+      },
+    },
     load: async () => {
       const module = await import('./add-selection-to-context.js')
       return module.AddSelectionToContextCommand
@@ -60,13 +60,13 @@ export const commandRegistry: readonly LazyCommandEntry[] = [
   // clear-context-root.ts
   {
     manifest: {
-  commandId: 'babadeluxe-ai-coder.clearContextRoot',
-  title: 'BabaDeluxe: Clear Context Root Folder',
-  icon: '$(clear-all)',
-  menus: {
-    'view/title': [{ when: 'view == babadeluxe-ai-coder-chat', group: 'navigation@30' }],
-  },
-},
+      commandId: 'babadeluxe-ai-coder.clearContextRoot',
+      title: 'BabaDeluxe: Clear Context Root Folder',
+      icon: '$(clear-all)',
+      menus: {
+        'view/title': [{ when: 'view == babadeluxe-ai-coder-chat', group: 'navigation@30' }],
+      },
+    },
     load: async () => {
       const module = await import('./clear-context-root.js')
       return module.ClearContextRootCommand
@@ -75,13 +75,13 @@ export const commandRegistry: readonly LazyCommandEntry[] = [
   // generate-commit-message.ts
   {
     manifest: {
-  commandId: 'babadeluxe-ai-coder.git.generateCommitMessage',
-  title: 'BabaDeluxe: Generate Commit Message',
-  icon: '$(sparkle)',
-  menus: {
-    'scm/title': [{ when: 'scmProvider == git', group: 'navigation@10' }],
-  },
-},
+      commandId: 'babadeluxe-ai-coder.git.generateCommitMessage',
+      title: 'BabaDeluxe: Generate Commit Message',
+      icon: '$(sparkle)',
+      menus: {
+        'scm/title': [{ when: 'scmProvider == git', group: 'navigation@10' }],
+      },
+    },
     load: async () => {
       const module = await import('./generate-commit-message.js')
       return module.GenerateCommitMessageCommand
@@ -90,13 +90,13 @@ export const commandRegistry: readonly LazyCommandEntry[] = [
   // open-settings.ts
   {
     manifest: {
-  commandId: 'babadeluxe-ai-coder.openSettings',
-  title: 'BabaDeluxe: Open Settings',
-  icon: '$(gear)',
-  menus: {
-    'view/title': [{ when: 'view == babadeluxe-ai-coder-chat', group: 'navigation@10' }],
-  },
-},
+      commandId: 'babadeluxe-ai-coder.openSettings',
+      title: 'BabaDeluxe: Open Settings',
+      icon: '$(gear)',
+      menus: {
+        'view/title': [{ when: 'view == babadeluxe-ai-coder-chat', group: 'navigation@10' }],
+      },
+    },
     load: async () => {
       const module = await import('./open-settings.js')
       return module.OpenSettingsCommand
@@ -105,13 +105,13 @@ export const commandRegistry: readonly LazyCommandEntry[] = [
   // set-context-root.ts
   {
     manifest: {
-  commandId: 'babadeluxe-ai-coder.setContextRoot',
-  title: 'BabaDeluxe: Set Context Root Folder',
-  icon: '$(folder-opened)',
-  menus: {
-    'view/title': [{ when: 'view == babadeluxe-ai-coder-chat', group: 'navigation@20' }],
-  },
-},
+      commandId: 'babadeluxe-ai-coder.setContextRoot',
+      title: 'BabaDeluxe: Set Context Root Folder',
+      icon: '$(folder-opened)',
+      menus: {
+        'view/title': [{ when: 'view == babadeluxe-ai-coder-chat', group: 'navigation@20' }],
+      },
+    },
     load: async () => {
       const module = await import('./set-context-root.js')
       return module.SetContextRootCommand
@@ -120,14 +120,13 @@ export const commandRegistry: readonly LazyCommandEntry[] = [
   // show-chat.ts
   {
     manifest: {
-  commandId: 'babadeluxe-ai-coder.showChat',
-  title: 'BabaDeluxe: Show Chat',
-  icon: '$(comment-discussion)',
-},
+      commandId: 'babadeluxe-ai-coder.showChat',
+      title: 'BabaDeluxe: Show Chat',
+      icon: '$(comment-discussion)',
+    },
     load: async () => {
       const module = await import('./show-chat.js')
       return module.ShowChatCommand
     },
   },
 ]
-

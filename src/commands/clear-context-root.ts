@@ -1,4 +1,4 @@
-import { clearSelectedContextRootFsPath } from '../context-root-storage.js'
+import { clearSelectedContextRootFsPath } from '../context/storage.js'
 import { isWorkspaceOpen } from './helper.js'
 import type { CommandDependencies, CommandManifest, ExtensionCommand } from './types.js'
 
@@ -13,18 +13,20 @@ export const clearContextRootManifest: CommandManifest = {
 
 export class ClearContextRootCommand implements ExtensionCommand {
   async run(dependencies: CommandDependencies): Promise<void> {
-    const { context, logger, vscode } = dependencies
+    const { context, logger, vscode: vscodeApi, gb } = dependencies
 
     logger.log('[command] clearContextRoot called')
 
-    if (!isWorkspaceOpen(vscode)) {
-      void vscode.window.showInformationMessage('No workspace open; nothing to clear.')
+    if (!isWorkspaceOpen(vscodeApi)) {
+      void vscodeApi.window.showInformationMessage('No workspace open; nothing to clear.')
       return
     }
 
     await clearSelectedContextRootFsPath(context)
     logger.log('[command] Context root cleared from workspaceState')
 
-    void vscode.window.showInformationMessage('Context root cleared for this workspace.')
+    void gb.track('clear-context-root-success')
+
+    void vscodeApi.window.showInformationMessage('Context root cleared for this workspace.')
   }
 }

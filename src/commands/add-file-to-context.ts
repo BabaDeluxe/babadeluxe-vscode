@@ -1,4 +1,4 @@
-import type { PinFileMessage } from '../types.js'
+import type { PinFileMessage } from '../context/types.js'
 import { isQueuedPostStatus, showQueuedContextNotice, toUri } from './helper.js'
 import type { CommandDependencies, CommandManifest, ExtensionCommand } from './types.js'
 
@@ -17,17 +17,30 @@ export const addFileToContextManifest: CommandManifest = {
 
 export class AddFileToContextCommand implements ExtensionCommand {
   async run(dependencies: CommandDependencies, ...args: unknown[]): Promise<void> {
-    const { logger, sidebar, vscode, openChat } = dependencies
+    const { logger, sidebar, vscode: vscodeApi, openChat, gb } = dependencies
 
     logger.log('[command] addFileToBabaContext called')
 
     const resource = toUri(args[0])
-    const uri = resource ?? vscode.window.activeTextEditor?.document.uri
+    const uri = resource ?? vscodeApi.window.activeTextEditor?.document.uri
 
     if (!uri) {
       logger.warn('[command] No file selected for addFileToBabaContext')
-      void vscode.window.showWarningMessage('No file selected.')
+      void vscodeApi.window.showWarningMessage('No file selected.')
       return
+    }
+
+    // A/B test for add file confirmation
+    const showConfirmation = gb.is('add-file-confirmation-enabled')
+    if (showConfirmation) {
+      const confirm = await vscodeApi.window.showInformationMessage(
+        `Add ${vscodeApi.workspace.asRelativePath(uri)} to context?`,
+        'Yes', 'No'
+      )
+      if (confirm !== 'Yes') {
+        void gb.track('add-file-cancelled', { filePath: uri.fsPath })
+        return
+      }
     }
 
     logger.log('[command] Adding file to context:', uri.fsPath)
@@ -36,13 +49,19 @@ export class AddFileToContextCommand implements ExtensionCommand {
     const postResult = await sidebar.postMessageToSidebar(message)
     if (postResult.isErr()) {
       logger.error('[command] Failed to add file to context:', postResult.error)
-      void vscode.window.showErrorMessage('Failed to add context.')
+      void vscodeApi.window.showErrorMessage('Failed to add context.')
+      void gb.track('add-file-failed', { error: postResult.error.message })
       return
     }
 
+    void gb.track('add-file-success', {
+      filePath: uri.fsPath,
+      isQueued: isQueuedPostStatus(postResult.value)
+    })
+
     logger.log('[command] File added, status:', postResult.value)
     if (postResult.isOk() && isQueuedPostStatus(postResult.value)) {
-      await showQueuedContextNotice({ vscode, openChat })
+      await showQueuedContextNotice({ vscode: vscodeApi, openChat })
     }
   }
 }

@@ -12,9 +12,9 @@ export function registerLazyCommands(options: {
     if (cached) return cached
 
     const instancePromise = (async (): Promise<ExtensionCommand> => {
-      const commandConstructor = await entry.load()
+      const module = await entry.load()
       // eslint-disable-next-line new-cap
-      return new commandConstructor()
+      return new module()
     })()
 
     commandInstancePromisesByCommandId.set(entry.manifest.commandId, instancePromise)

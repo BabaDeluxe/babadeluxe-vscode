@@ -1,5 +1,5 @@
-import { BaseError } from '@babadeluxe/shared'
 import { describe, it, expect } from 'vitest'
+import { BaseError } from '../src/system/errors.js'
 
 class TestError extends BaseError {}
 class CustomNamespaceError extends BaseError {

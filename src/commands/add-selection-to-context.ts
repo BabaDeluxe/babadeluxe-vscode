@@ -1,13 +1,14 @@
-/* eslint-disable @typescript-eslint/consistent-type-imports */
+import type * as vscode from 'vscode'
 import { type Result, err, ok } from 'neverthrow'
-import { ContextCommandError } from '../errors.js'
-import type { PinSnippetMessage, TextRange } from '../types.js'
+import { ContextCommandError } from '../context/errors.js'
+import type { PinSnippetMessage } from '../context/types.js'
+import type { TextRange } from '../scoring/types.js'
 import type { CommandDependencies, CommandManifest, ExtensionCommand } from './types.js'
 import { isQueuedPostStatus, showQueuedContextNotice } from './helper.js'
 
 const makeId = (): string => `${Date.now()}-${Math.random().toString(16).slice(2)}`
 
-function selectionToRange(editor: import('vscode').TextEditor): TextRange {
+function selectionToRange(editor: vscode.TextEditor): TextRange {
   const { selection } = editor
 
   return {
@@ -19,9 +20,9 @@ function selectionToRange(editor: import('vscode').TextEditor): TextRange {
 }
 
 function getSelectionSnippet(
-  vscode: typeof import('vscode')
+  vscodeApi: typeof import('vscode')
 ): Result<{ filePath: string; snippet: string; range: TextRange }, ContextCommandError> {
-  const editor = vscode.window.activeTextEditor
+  const editor = vscodeApi.window.activeTextEditor
   if (!editor) return err(new ContextCommandError('No active editor.'))
 
   const { selection } = editor
@@ -46,14 +47,15 @@ export const addSelectionToContextManifest: CommandManifest = {
 
 export class AddSelectionToContextCommand implements ExtensionCommand {
   async run(dependencies: CommandDependencies): Promise<void> {
-    const { logger, sidebar, vscode, openChat } = dependencies
+    const { logger, sidebar, vscode: vscodeApi, openChat, gb } = dependencies
 
     logger.log('[command] addSelectionToBabaContext called')
 
-    const selectionResult = getSelectionSnippet(vscode)
+    const selectionResult = getSelectionSnippet(vscodeApi)
     if (selectionResult.isErr()) {
       logger.error('[command] Failed to get selection:', selectionResult.error)
-      void vscode.window.showErrorMessage(selectionResult.error.message)
+      void vscodeApi.window.showErrorMessage(selectionResult.error.message)
+      void gb.track('add-selection-failed', { error: selectionResult.error.message })
       return
     }
 
@@ -69,12 +71,18 @@ export class AddSelectionToContextCommand implements ExtensionCommand {
     const postResult = await sidebar.postMessageToSidebar(message)
     if (postResult.isErr()) {
       logger.error('[command] Failed to add snippet to context:', postResult.error)
-      void vscode.window.showErrorMessage('Failed to add context.')
+      void vscodeApi.window.showErrorMessage('Failed to add context.')
+      void gb.track('add-selection-post-failed', { error: postResult.error.message })
       return
     }
 
+    void gb.track('add-selection-success', {
+      filePath: selectionResult.value.filePath,
+      snippetLength: selectionResult.value.snippet.length
+    })
+
     if (postResult.isOk() && isQueuedPostStatus(postResult.value)) {
-      await showQueuedContextNotice({ vscode, openChat })
+      await showQueuedContextNotice({ vscode: vscodeApi, openChat })
     }
   }
 }

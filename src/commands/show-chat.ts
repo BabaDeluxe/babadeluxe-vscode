@@ -8,7 +8,9 @@ export const showChatManifest: CommandManifest = {
 
 export class ShowChatCommand implements ExtensionCommand {
   async run(dependencies: CommandDependencies): Promise<void> {
-    dependencies.logger.log('[command] showChat called')
-    await dependencies.openChat()
+    const { logger, openChat, gb } = dependencies
+    logger.log('[command] showChat called')
+    void gb.track('show-chat-command')
+    await openChat()
   }
 }

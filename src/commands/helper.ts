@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/consistent-type-imports */
 import type * as vscode from 'vscode'
-import type { PostStatus } from '../webview-pins-controller.js'
+import type { PostStatus } from '../webview/pins.js'
 
 export function isWorkspaceOpen(vscodeApi: typeof import('vscode')): boolean {
   return Boolean(vscodeApi.workspace.workspaceFolders?.length)
@@ -10,7 +10,7 @@ export async function showQueuedContextNotice(options: {
   vscode: typeof import('vscode')
   openChat: () => Promise<unknown>
 }): Promise<void> {
-  const choice = await options.vscode.window.showInformationMessage(
+  const choice = await options.void vscode.window.showInformationMessage(
     'Context added. Open BabaDeluxe Chat to use it.',
     'Open Chat'
   )
