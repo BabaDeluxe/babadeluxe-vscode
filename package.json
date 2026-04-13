@@ -151,8 +151,7 @@
     "package": "npm run build && vsce package --no-dependencies",
     "prepare": "husky",
     "find-dead-code": "knip",
-    "find-circular-ref": "madge --circular --extensions ts --ts-config ./tsconfig.app.json ./src",
-    "copy:webview": "rm -rf dist/webview && mkdir -p dist/webview && cp -r ../babadeluxe-webview/dist/* dist/webview/"
+    "find-circular-ref": "madge --circular --extensions ts --ts-config ./tsconfig.app.json ./src"
   },
   "devDependencies": {
     "@babadeluxe/xo-config": "^0.4.17",
