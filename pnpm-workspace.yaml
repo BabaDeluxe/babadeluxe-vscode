@@ -1,0 +1,7 @@
+allowBuilds:
+  '@babadeluxe/shared': false
+  '@vscode/ripgrep': true
+  '@vscode/vsce-sign': true
+  esbuild: true
+  keytar: true
+  unrs-resolver: true

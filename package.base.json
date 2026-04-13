@@ -1,23 +1,4 @@
 {
-  "name": "babadeluxe-vscode",
-  "displayName": "BabaDeluxe AI Coder",
-  "description": "Ultimate AI coding assistant",
-  "publisher": "babadeluxe",
-  "extensionId": "babadeluxe.babadeluxe-vscode",
-  "version": "0.1.0",
-  "engines": {
-    "vscode": "^1.104.0",
-    "node": ">=20.19.0",
-    "npm": ">=10.8.0"
-  },
-  "categories": [
-    "Other"
-  ],
-  "type": "module",
-  "activationEvents": [
-    "onUri"
-  ],
-  "main": "./dist/extension.js",
   "contributes": {
     "commands": [],
     "menus": {},
@@ -53,72 +34,5 @@
         }
       }
     }
-  },
-  "scripts": {
-    "generate:commands-registry": "tsx ./scripts/generate-command-registry.ts",
-    "vscode:prepublish": "npm run build",
-    "compile": "npm run generate:commands-registry && tsc -p tsconfig.app.json --noEmit && vite build",
-    "build": "npm run generate:commands-registry && vite build",
-    "build:full": "pwsh ..\\\\build-vscode-extension.ps1",
-    "watch": "npm run generate:commands-registry && vite build --watch",
-    "test": "vitest",
-    "test:ui": "vitest --ui",
-    "test:watch": "vitest watch",
-    "format": "xo --fix --prettier",
-    "typecheck": "tsc -p tsconfig.app.json --noEmit",
-    "package": "npm run build && vsce package --no-dependencies",
-    "prepare": "husky",
-    "find-dead-code": "knip",
-    "find-circular-ref": "madge --circular --extensions ts --ts-config ./tsconfig.app.json ./src",
-    "copy:webview": "rm -rf dist/webview && mkdir -p dist/webview && cp -r ../babadeluxe-webview/dist/* dist/webview/"
-  },
-  "devDependencies": {
-    "@babadeluxe/xo-config": "^0.3.2",
-    "@sindresorhus/tsconfig": "^8.0.1",
-    "@types/node": "^22.10.5",
-    "@types/stopword": "^2.0.3",
-    "@types/vscode": "^1.104.0",
-    "@typescript-eslint/eslint-plugin": "^8.43.0",
-    "@typescript-eslint/parser": "^8.43.0",
-    "@vitest/ui": "^2.1.9",
-    "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "^3.7.1",
-    "baseline-browser-mapping": "latest",
-    "husky": "^9.1.7",
-    "jest-mock-vscode": "^4.8.2",
-    "knip": "^5.82.1",
-    "typescript": "^5.9.2",
-    "vite": "^7.1.5",
-    "vitest": "^2.1.9",
-    "xo": "^1.2.2",
-    "tsx": "^4.21.0"
-  },
-  "dependencies": {
-    "@babadeluxe/shared": "^0.19.0",
-    "@hono/node-server": "^1.19.9",
-    "@supabase/supabase-js": "^2.91.0",
-    "@vscode/ripgrep": "^1.17.0",
-    "colorino": "^0.19.3",
-    "hono": "^4.11.7",
-    "ignore": "^7.0.5",
-    "neverthrow": "^8.2.0",
-    "p-queue": "^9.1.0",
-    "reactive-vscode": "^1.0.0-beta.2",
-    "stopword": "^3.1.5",
-    "wink-bm25-text-search": "^3.1.2"
-  },
-  "bundleDependencies": [
-    "@babadeluxe/shared",
-    "@hono/node-server",
-    "@supabase/supabase-js",
-    "@vscode/ripgrep",
-    "colorino",
-    "hono",
-    "ignore",
-    "neverthrow",
-    "p-queue",
-    "reactive-vscode",
-    "stopword",
-    "wink-bm25-text-search"
-  ]
+  }
 }

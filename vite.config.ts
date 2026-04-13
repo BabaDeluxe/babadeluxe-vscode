@@ -57,7 +57,7 @@ function buildContributesFromManifests(manifests: readonly CommandManifest[]): {
 
     for (const menuLocation of Object.keys(manifestMenus)) {
       const menuItems = manifestMenus[menuLocation] ?? []
-      menus[menuLocation] ||= []
+      menus[menuLocation] ??= []
 
       for (const menuItem of menuItems) {
         menus[menuLocation].push({
@@ -92,22 +92,27 @@ function syncExtensionManifestPlugin(): Plugin {
         throw new Error('package.base.json must contain a JSON object at the top level.')
       }
 
+      // Preserve fields from the existing package.json that are not in base.
+      // Merge order: existing → base → contributes (generated always wins).
+      const existingUnknown = await readJsonFile(outPath)
+      const existing: PackageJson = isRecord(existingUnknown) ? existingUnknown : {}
+
       const commandsDirectory = path.resolve(_dirname, 'src', 'commands')
       const registryEntries = await parseAllCommandFiles({ commandsDirectory, ignoredBasenames })
       const generated = buildContributesFromManifests(
         registryEntries.map((entry) => entry.manifest)
       )
 
-      const base = baseUnknown as PackageJson
       const contributes: Record<string, unknown> = {
-        ...(isRecord(base.contributes) ? base.contributes : {}),
+        ...(isRecord(baseUnknown['contributes']) ? baseUnknown['contributes'] : {}),
         commands: generated.commands,
         menus: generated.menus,
       }
 
       const next: PackageJson = {
-        ...base,
-        contributes,
+        ...existing, // foundation: all current package.json fields
+        ...baseUnknown, // base extends/overrides specific fields
+        contributes, // generated contributes always wins
       }
 
       await writeFileIfChanged(outPath, stableJsonStringify(next))

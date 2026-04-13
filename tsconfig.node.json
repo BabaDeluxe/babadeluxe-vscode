@@ -1,36 +1,33 @@
 {
   "extends": "@sindresorhus/tsconfig",
   "include": [
-    "./src/**/*.ts",
-    "./vite.config.ts",
-    "./vitest.config.ts",
-    "./xo.config.ts",
     "./*.ts",
+    "./src/*.ts",
     "./scripts/*.ts",
     "./tests/**/*.ts",
-    "./typings",
+    "./typings"
   ],
   "compilerOptions": {
     "rootDir": ".",
+    "sourceRoot": ".",
+    "sourceMap": true,
     "module": "ESNext",
     "moduleResolution": "Bundler",
     "noEmit": true,
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
     "erasableSyntaxOnly": false,
     "esModuleInterop": true,
     "strict": true,
-    "composite": true,
-    "incremental": true,
     "isolatedModules": true,
+    "composite": true,
     "verbatimModuleSyntax": true,
+    "declarationMap": true,
     "skipLibCheck": true,
-    "baseUrl": ".",
     "paths": {
       "reactive-vscode": [
-        "node_modules/reactive-vscode/dist/index.d.ts"
+        "./node_modules/reactive-vscode/dist/index.d.ts"
       ],
       "vitest": [
-        "node_modules/vitest/dist/index.d.ts"
+        "./node_modules/vitest/dist/index.d.ts"
       ]
     }
   }

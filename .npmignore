@@ -4,7 +4,10 @@ src/
 .vscode/
 .husky/
 *.log
+*.old
 .env
+.env.local
+.env.example
 tsconfig.json
 .gitignore
 .gitattributes
@@ -16,3 +19,5 @@ test-package.sh
 package.json
 package-lock.json
 xo[.-]config.ts
+tsconfig.tsbuildinfo
+.npmrc

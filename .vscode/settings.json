@@ -1,16 +1,15 @@
 {
-    "typescript.tsc.autoDetect": "off",
-    "typescript.tsdk": "node_modules/typescript/lib",
-    "typescript.tsserver.experimental.enableProjectDiagnostics": false,
+    "js/ts.tsc.autoDetect": "off",
+    "js/ts.tsdk": "node_modules/typescript/lib",
+    "js/ts.tsserver.experimental.enableProjectDiagnostics": false,
     "search.quickOpen.includeHistory": true,
     "search.exclude": {
         "/node_modules": true,
         "/dist": true
     },
-    "typescript.suggest.paths": true,
-    "javascript.suggest.paths": true,
-    "typescript.preferences.importModuleSpecifier": "shortest",
-    "typescript.preferences.importModuleSpecifierEnding": "js",
+    "js/ts.suggest.paths": true,
+    "js/ts.preferences.importModuleSpecifier": "shortest",
+    "js/ts.preferences.importModuleSpecifierEnding": "js",
     "terminal.integrated.detectLocale": "on",
     "files.encoding": "utf8",
     "files.eol": "\n",
