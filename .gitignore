@@ -1,10 +1,10 @@
 node_modules/
 build/
+final-dist/
 dist/
 out/
 
 .vscode-test/
-dist-ssr/
 coverage/
 logs/
 
@@ -23,3 +23,5 @@ bundle-analysis.html
 *.db
 *.vsix
 *.old
+.env
+.env.local

@@ -19,6 +19,7 @@ export class AddFileToContextCommand implements ExtensionCommand {
   async run(dependencies: CommandDependencies, ...args: unknown[]): Promise<void> {
     const { logger, sidebar, vscode, openChat } = dependencies
 
+    // TODO Remove the manual context []
     logger.log('[command] addFileToBabaContext called')
 
     const resource = toUri(args[0])

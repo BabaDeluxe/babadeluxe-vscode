@@ -3,7 +3,7 @@
 <p align="left">
   <img src="https://img.shields.io/badge/license-EUPL%201.2-6a5acd?style=flat-rounded" alt="license">
   <img src="https://img.shields.io/badge/code_style-XO-8a2be2?style=flat-rounded" alt="code style: xo">
-  <img src="https://img.shields.io/badge/vscode-%3E%3D1.104-007ACC?style=flat-rounded" alt="vscode version">
+  <img src="https://img.shields.io/badge/vscode-%3E%3D1.104-9a56bf?style=flat-rounded" alt="vscode version">
   <img src="https://img.shields.io/badge/node-%3E%3D20-b06ab3?style=flat-rounded" alt="node version">
 </p>
 
@@ -39,24 +39,24 @@ This extension brings the power of the BabaDeluxe AI Coder into Visual Studio Co
 
 ## Commands
 
-| Command | Description |
-| :--- | :--- |
-| `babadeluxe-ai-coder.context.addFileToBabaContext` | Add file to context |
-| `babadeluxe-ai-coder.context.addFolderToBabaContext` | Add folder to context |
-| `babadeluxe-ai-coder.context.addSelectionToBabaContext` | Add selection to context |
-| `babadeluxe-ai-coder.clearContextRoot` | Clear context root folder |
-| `babadeluxe-ai-coder.git.generateCommitMessage` | Generate commit message |
-| `babadeluxe-ai-coder.openSettings` | Open extension settings |
-| `babadeluxe-ai-coder.setContextRoot` | Set context root folder |
-| `babadeluxe-ai-coder.showChat` | Show chat panel |
+| Command                                                 | Description               |
+| :------------------------------------------------------ | :------------------------ |
+| `babadeluxe-ai-coder.context.addFileToBabaContext`      | Add file to context       |
+| `babadeluxe-ai-coder.context.addFolderToBabaContext`    | Add folder to context     |
+| `babadeluxe-ai-coder.context.addSelectionToBabaContext` | Add selection to context  |
+| `babadeluxe-ai-coder.clearContextRoot`                  | Clear context root folder |
+| `babadeluxe-ai-coder.git.generateCommitMessage`         | Generate commit message   |
+| `babadeluxe-ai-coder.openSettings`                      | Open extension settings   |
+| `babadeluxe-ai-coder.setContextRoot`                    | Set context root folder   |
+| `babadeluxe-ai-coder.showChat`                          | Show chat panel           |
 
 ## Configuration
 
 This extension contributes the following settings:
 
-| Setting | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `babadeluxe-ai-coder.contextRoot` | `string | null` | `null` | Folder used as the context root for BabaDeluxe context search. |
+| Setting                           | Type    | Default | Description |
+| :-------------------------------- | :------ | :------ | :---------- | -------------------------------------------------------------- |
+| `babadeluxe-ai-coder.contextRoot` | `string | null`   | `null`      | Folder used as the context root for BabaDeluxe context search. |
 
 ## Prerequisites
 
@@ -96,16 +96,16 @@ npm run package
 
 ## NPM Scripts
 
-| Script | Description |
-| :--- | :--- |
+| Script                       | Description                                      |
+| :--------------------------- | :----------------------------------------------- |
 | `generate:commands-registry` | Generate the commands registry from package.json |
-| `compile` | Compile with TypeScript and Vite |
-| `build` | Build the extension |
-| `watch` | Build in watch mode for development |
-| `test` | Run tests with Vitest |
-| `format` | Fix linting issues with XO and Prettier |
-| `typecheck` | Run TypeScript type checking |
-| `package` | Package the extension with vsce |
+| `compile`                    | Compile with TypeScript and Vite                 |
+| `build`                      | Build the extension                              |
+| `watch`                      | Build in watch mode for development              |
+| `test`                       | Run tests with Vitest                            |
+| `format`                     | Fix linting issues with XO and Prettier          |
+| `typecheck`                  | Run TypeScript type checking                     |
+| `package`                    | Package the extension with vsce                  |
 
 ## Architecture
 

@@ -151,10 +151,20 @@
     "package": "npm run build && vsce package --no-dependencies",
     "prepare": "husky",
     "find-dead-code": "knip",
-    "find-circular-ref": "madge --circular --extensions ts --ts-config ./tsconfig.app.json ./src"
+    "find-circular-ref": "madge --circular --extensions ts --ts-config ./tsconfig.app.json ./src",
+    "test-release": "node --env-file=.env ./node_modules/semantic-release/bin/semantic-release.js --no-ci --dry-run",
+    "release": "node --env-file=.env ./node_modules/semantic-release/bin/semantic-release.js --no-ci"
   },
   "devDependencies": {
     "@babadeluxe/xo-config": "^0.4.17",
+    "@commitlint/cli": "20.5.0",
+    "@commitlint/config-conventional": "20.5.0",
+    "@semantic-release/changelog": "6.0.3",
+    "@semantic-release/commit-analyzer": "11.1.0",
+    "@semantic-release/git": "10.0.1",
+    "@semantic-release/github": "9.2.6",
+    "@semantic-release/npm": "11.0.2",
+    "@semantic-release/release-notes-generator": "12.1.0",
     "@sindresorhus/tsconfig": "^8.0.1",
     "@types/node": "^22.10.5",
     "@types/stopword": "^2.0.3",
@@ -168,6 +178,9 @@
     "husky": "^9.1.7",
     "jest-mock-vscode": "^4.8.2",
     "knip": "^5.82.1",
+    "lint-staged": "^16.4.0",
+    "semantic-release": "23.0.2",
+    "semantic-release-vsce": "6.1.2",
     "tsx": "^4.21.0",
     "typescript": "^5.9.2",
     "vite": "^7.1.5",
@@ -201,5 +214,15 @@
     "reactive-vscode",
     "stopword",
     "wink-bm25-text-search"
-  ]
+  ],
+  "packageManager": "pnpm@10.33.0+sha512.10568bb4a6afb58c9eb3630da90cc9516417abebd3fabbe6739f0ae795728da1491e9db5a544c76ad8eb7570f5c4bb3d6c637b2cb41bfdcdb47fa823c8649319",
+  "private": "true",
+  "license": "MIT",
+  "icon": "./assets/babadeluxe-icon.png",
+  "homepage": "https://github.com/simwai/babadeluxe-vscode",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/simwai/babadeluxe-vscode"
+  },
+  "bugs": "https://github.com/simwai/babadeluxe-vscode/issues"
 }

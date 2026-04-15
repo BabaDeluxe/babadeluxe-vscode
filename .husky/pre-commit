@@ -1,25 +1,13 @@
 #!/bin/bash
+set -euo pipefail
 
-# Store the original commit message
-COMMIT_MSG_FILE="$GIT_DIR/COMMIT_EDITMSG"
-if [ -f "$COMMIT_MSG_FILE" ]; then
-  COMMIT_MSG=$(cat "$COMMIT_MSG_FILE")
-else
-  COMMIT_MSG=""
-fi
+staged_list="$(mktemp)"
+trap 'rm -f "$staged_list"' EXIT
 
-# Capture the list of originally staged files
-STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
+git diff --cached --name-only --diff-filter=ACM -z >"$staged_list"
 
-# Format JavaScript code
-npm run format
+pnpm run format
 
-# Only re-stage the files that were originally staged (if they were modified by formatting)
-if [ -n "$STAGED_FILES" ]; then
-  echo "$STAGED_FILES" | xargs git add
-
-  # Reapply the original commit message
-  if [ -n "$COMMIT_MSG" ]; then
-    echo "$COMMIT_MSG" > "$COMMIT_MSG_FILE"
-  fi
+if [[ -s "$staged_list" ]]; then
+  xargs -0 git add -- <"$staged_list"
 fi
