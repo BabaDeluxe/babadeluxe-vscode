@@ -50,14 +50,6 @@ This extension brings the power of the BabaDeluxe AI Coder into Visual Studio Co
 | `babadeluxe-ai-coder.setContextRoot`                    | Set context root folder   |
 | `babadeluxe-ai-coder.showChat`                          | Show chat panel           |
 
-## Configuration
-
-This extension contributes the following settings:
-
-| Setting                           | Type    | Default | Description |
-| :-------------------------------- | :------ | :------ | :---------- | -------------------------------------------------------------- |
-| `babadeluxe-ai-coder.contextRoot` | `string | null`   | `null`      | Folder used as the context root for BabaDeluxe context search. |
-
 ## Prerequisites
 
 - **VS Code**: >= 1.104.0
