@@ -4,7 +4,7 @@
   "description": "Ultimate AI coding assistant",
   "publisher": "babadeluxe",
   "extensionId": "babadeluxe.babadeluxe-vscode",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "engines": {
     "vscode": "^1.104.0",
     "node": ">=20.19.0",
@@ -137,8 +137,9 @@
     }
   },
   "scripts": {
+    "prepare": "husky",
+    "vscode:prepublish": "pnpm build:full && pnpm run release",
     "generate:commands-registry": "tsx ./scripts/generate-command-registry.ts",
-    "vscode:prepublish": "pnpm build:full",
     "compile": "pnpm run generate:commands-registry && tsc -p tsconfig.app.json --noEmit && vite build",
     "build": "pnpm run generate:commands-registry && vite build",
     "build:full": "pwsh ../build-vscode-extension.ps1",
@@ -148,12 +149,11 @@
     "test:watch": "vitest watch",
     "format": "xo --fix --prettier",
     "type-check": "tsc -p tsconfig.app.json --noEmit",
-    "package": "npm run build && vsce package --no-dependencies",
-    "prepare": "husky",
-    "find-dead-code": "knip",
-    "find-circular-ref": "madge --circular --extensions ts --ts-config ./tsconfig.app.json ./src",
+    "package": "pnpm run build && vsce package --no-dependencies",
     "test-release": "node --env-file=.env ./node_modules/semantic-release/bin/semantic-release.js --no-ci --dry-run",
-    "release": "node --env-file=.env ./node_modules/semantic-release/bin/semantic-release.js --no-ci"
+    "release": "node --env-file=.env ./node_modules/semantic-release/bin/semantic-release.js --no-ci",
+    "find-dead-code": "knip",
+    "find-circular-ref": "madge --circular --extensions ts --ts-config ./tsconfig.app.json ./src"
   },
   "devDependencies": {
     "@babadeluxe/xo-config": "^0.4.17",
