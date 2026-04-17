@@ -2,7 +2,7 @@ import * as path from 'node:path'
 import { promisify } from 'node:util'
 import { execFile } from 'node:child_process'
 import * as vscode from 'vscode'
-import type { API as GitApi, GitExtension, Repository } from '../typings/git'
+import type { API as GitApi, GitExtension, Repository } from '../typings/git.d.js'
 
 const execFileAsync = promisify(execFile)
 
