@@ -1,12 +1,13 @@
 #!/bin/bash
 set -euo pipefail
 
+pnpm type-check
+
 staged_list="$(mktemp)"
 trap 'rm -f "$staged_list"' EXIT
 
 git diff --cached --name-only --diff-filter=ACM -z >"$staged_list"
-
-pnpm run format
+pnpm format
 
 if [[ -s "$staged_list" ]]; then
   xargs -0 git add -- <"$staged_list"
