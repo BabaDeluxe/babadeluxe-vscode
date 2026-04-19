@@ -3,6 +3,7 @@ build/
 final-dist/
 dist/
 out/
+final-dist/
 
 .vscode-test/
 coverage/
