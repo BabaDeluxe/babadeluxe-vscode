@@ -1,14 +1,44 @@
 #!/bin/bash
 set -euo pipefail
 
-pnpm type-check
-
 staged_list="$(mktemp)"
 trap 'rm -f "$staged_list"' EXIT
 
-git diff --cached --name-only --diff-filter=ACM -z >"$staged_list"
-pnpm format
+# Capture staged file paths as null-delimited stream to handle spaces in filenames
+git diff --cached --name-only --diff-filter=ACM -z > "$staged_list"
 
-if [[ -s "$staged_list" ]]; then
-  xargs -0 git add -- <"$staged_list"
+if [[ ! -s "$staged_list" ]]; then
+  echo "[pre-commit] no staged files found, skipping"
+  exit 0
 fi
+
+staged_files=()
+has_typeable_files=false
+while IFS= read -r -d '' file; do
+  # Track executable bit in git index so it survives clone/pull
+  [[ "$file" == *.sh ]] && git update-index --chmod=+x "$file"
+
+  # Flag if any file requires type checking
+  [[ "$file" =~ \.(ts|tsx|js|vue|html)$ ]] && has_typeable_files=true
+
+  # Collect all staged files — xo config determines what it actually lints
+  staged_files+=("$file")
+done < "$staged_list"
+
+# Only run type-check when TS/JS/Vue/HTML files are staged
+if [[ "$has_typeable_files" == true ]]; then
+  echo "[pre-commit] running type-check..."
+  pnpm type-check || { echo "[pre-commit] ABORT: type-check failed — fix type errors before committing"; exit 1; }
+  echo "[pre-commit] type-check passed"
+fi
+
+# Lint, fix, and format in one pass — xo ignores files outside its config scope
+echo "[pre-commit] running xo --fix --prettier on ${#staged_files[@]} staged file(s)..."
+pnpm xo --fix --prettier "${staged_files[@]}" || { echo "[pre-commit] ABORT: xo failed — fix lint errors before committing"; exit 1; }
+echo "[pre-commit] xo passed"
+
+# Re-stage originally staged files to include any auto-fix changes
+echo "[pre-commit] re-staging auto-fixed files..."
+xargs -0 git add -- < "$staged_list"
+
+echo "[pre-commit] all checks passed"
