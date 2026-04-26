@@ -17,7 +17,6 @@ README.md
 example.npmrc
 test-package.sh
 package.json
-package-lock.json
 xo[.-]config.ts
 tsconfig.tsbuildinfo
 .npmrc

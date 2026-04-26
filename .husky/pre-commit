@@ -6,7 +6,6 @@ trap 'rm -f "$staged_list"' EXIT
 
 # Capture staged file paths as null-delimited stream to handle spaces in filenames
 git diff --cached --name-only --diff-filter=ACM -z > "$staged_list"
-
 if [[ ! -s "$staged_list" ]]; then
   echo "[pre-commit] no staged files found, skipping"
   exit 0
@@ -17,11 +16,9 @@ has_typeable_files=false
 while IFS= read -r -d '' file; do
   # Track executable bit in git index so it survives clone/pull
   [[ "$file" == *.sh ]] && git update-index --chmod=+x "$file"
-
   # Flag if any file requires type checking
   [[ "$file" =~ \.(ts|tsx|js|vue|html)$ ]] && has_typeable_files=true
 
-  # Collect all staged files — xo config determines what it actually lints
   staged_files+=("$file")
 done < "$staged_list"
 
@@ -37,8 +34,9 @@ echo "[pre-commit] running xo --fix --prettier on ${#staged_files[@]} staged fil
 pnpm xo --fix --prettier "${staged_files[@]}" || { echo "[pre-commit] ABORT: xo failed — fix lint errors before committing"; exit 1; }
 echo "[pre-commit] xo passed"
 
-# Re-stage originally staged files to include any auto-fix changes
 echo "[pre-commit] re-staging auto-fixed files..."
-xargs -0 git add -- < "$staged_list"
+while IFS= read -r -d '' file; do
+  git add -- "$file"
+done < "$staged_list"
 
 echo "[pre-commit] all checks passed"
