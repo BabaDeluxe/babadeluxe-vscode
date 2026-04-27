@@ -1,42 +1,76 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
+
+typecheck_trigger_pattern='\.(ts|tsx|js|vue|html)$'
+
+is_git_submodule_path() {
+  local file_path="$1"
+  local index_entry
+
+  index_entry="$(git ls-files --stage -- "$file_path" || true)"
+  [[ "$index_entry" == 160000\ * ]]
+}
 
 staged_list="$(mktemp)"
 trap 'rm -f "$staged_list"' EXIT
 
-# Capture staged file paths as null-delimited stream to handle spaces in filenames
-git diff --cached --name-only --diff-filter=ACM -z > "$staged_list"
+git diff --cached --name-only --diff-filter=ACM -z >"$staged_list"
+
 if [[ ! -s "$staged_list" ]]; then
   echo "[pre-commit] no staged files found, skipping"
   exit 0
 fi
 
-staged_files=()
 has_typeable_files=false
+has_non_submodule_files=false
+
 while IFS= read -r -d '' file; do
-  # Track executable bit in git index so it survives clone/pull
-  [[ "$file" == *.sh ]] && git update-index --chmod=+x "$file"
-  # Flag if any file requires type checking
-  [[ "$file" =~ \.(ts|tsx|js|vue|html)$ ]] && has_typeable_files=true
+  if is_git_submodule_path "$file"; then
+    echo "[pre-commit] skipping git submodule path: $file"
+    continue
+  fi
 
-  staged_files+=("$file")
-done < "$staged_list"
+  has_non_submodule_files=true
 
-# Only run type-check when TS/JS/Vue/HTML files are staged
-if [[ "$has_typeable_files" == true ]]; then
-  echo "[pre-commit] running type-check..."
-  pnpm type-check || { echo "[pre-commit] ABORT: type-check failed — fix type errors before committing"; exit 1; }
-  echo "[pre-commit] type-check passed"
+  if [[ "$file" == *.sh ]]; then
+    git update-index --chmod=+x "$file"
+  fi
+
+  if [[ "$file" =~ $typecheck_trigger_pattern ]]; then
+    has_typeable_files=true
+  fi
+done <"$staged_list"
+
+if [[ "$has_non_submodule_files" != true ]]; then
+  echo "[pre-commit] only git submodule paths staged, skipping"
+  exit 0
 fi
 
-# Lint, fix, and format in one pass — xo ignores files outside its config scope
-echo "[pre-commit] running xo --fix --prettier on ${#staged_files[@]} staged file(s)..."
-pnpm xo --fix --prettier "${staged_files[@]}" || { echo "[pre-commit] ABORT: xo failed — fix lint errors before committing"; exit 1; }
-echo "[pre-commit] xo passed"
+if [[ "$has_typeable_files" == true ]]; then
+  echo "[pre-commit] running type-check..."
+  pnpm type-check || {
+    echo "[pre-commit] ABORT: type-check failed — fix type errors before committing"
+    exit 1
+  }
+  echo "[pre-commit] type-check passed"
+else
+  echo "[pre-commit] no type-check-triggering files staged, skipping type-check"
+fi
+
+echo "[pre-commit] running pnpm format..."
+pnpm format || {
+  echo "[pre-commit] ABORT: format failed"
+  exit 1
+}
+echo "[pre-commit] format passed"
 
 echo "[pre-commit] re-staging auto-fixed files..."
 while IFS= read -r -d '' file; do
+  if is_git_submodule_path "$file"; then
+    continue
+  fi
+
   git add -- "$file"
-done < "$staged_list"
+done <"$staged_list"
 
 echo "[pre-commit] all checks passed"

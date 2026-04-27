@@ -149,8 +149,8 @@
     "format": "xo --fix --prettier",
     "type-check": "tsc -p tsconfig.app.json --noEmit",
     "package": "pnpm run build && vsce package --no-dependencies",
-    "test-release": "node --env-file=.env ./node_modules/semantic-release/bin/semantic-release.js --no-ci --dry-run",
-    "release": "node --env-file=.env ./node_modules/semantic-release/bin/semantic-release.js --no-ci",
+    "test-release": "node --env-file=./.env ./node_modules/semantic-release/bin/semantic-release.js --no-ci --dry-run",
+    "release": "node --env-file=./.env ./node_modules/semantic-release/bin/semantic-release.js --no-ci",
     "find-dead-code": "knip",
     "find-circular-ref": "madge --circular --extensions ts --ts-config ./tsconfig.app.json ./src"
   },
@@ -184,7 +184,7 @@
     "typescript": "^5.9.2",
     "vite": "^7.1.5",
     "vitest": "^2.1.9",
-    "xo": "^1.2.2"
+    "xo": "1.2.2"
   },
   "dependencies": {
     "@babadeluxe/shared": "^0.20.0",
