@@ -20,35 +20,47 @@ This extension brings the power of the BabaDeluxe AI Coder into Visual Studio Co
 
 ## Features
 
-### Context Management
+### Auto-Context (BM25)
 
-- **Add File to BabaContext™**: Add individual files to the AI context via explorer context menu.
-- **Add Folder to BabaContext™**: Add entire folders to the AI context for comprehensive codebase understanding.
+When no context is manually pinned, the extension automatically selects the most relevant files for every prompt using a BM25 full-text search index over your workspace. The ranking is a composite score of three signals:
+
+- **BM25 relevance** — term frequency/inverse document frequency against the prompt text
+- **Git recency** — recently modified files score higher
+- **Session recency** — files accessed earlier in the current session score higher
+
+The number of candidates fed to the model adapts based on total token budget. The index is built incrementally on workspace open and updated on file saves.
+
+### BabaContext™ — Manual Pinning
+
+For precise control, pin any file, folder, or selection to the context explicitly. Pinned items are always included regardless of the BM25 ranking and persist across prompts until cleared.
+
+- **Add File to BabaContext™**: Add individual files via explorer context menu.
+- **Add Folder to BabaContext™**: Add entire folders for comprehensive codebase coverage.
 - **Add Code to BabaContext™**: Add selected code snippets directly from the editor.
-- **Set Context Root**: Define the root folder for context search operations.
+- **Set Context Root**: Define the root folder for auto-context search scope.
 - **Clear Context Root**: Reset the context root folder.
 
 ### Git Integration
 
-- **Generate Commit Message**: Automatically generate a semantic commit message based on your staged changes in the SCM view.
+- **Generate Commit Message**: Automatically generates a semantic commit message from staged changes in the SCM view.
 
 ### Chat Interface
 
-- **Integrated Chat Panel**: Access the full AI coding assistant directly from VS Code's activity bar.
-- **Settings Management**: Configure extension behavior through VS Code settings.
+- **Integrated Chat Panel**: Access the full AI coding assistant from VS Code's activity bar.
+- **Settings Management**: Configure the extension through VS Code settings.
 
 ## Commands
 
-| Command                                                 | Description               |
-| :------------------------------------------------------ | :------------------------ |
-| `babadeluxe-ai-coder.context.addFileToBabaContext`      | Add file to context       |
-| `babadeluxe-ai-coder.context.addFolderToBabaContext`    | Add folder to context     |
-| `babadeluxe-ai-coder.context.addSelectionToBabaContext` | Add selection to context  |
-| `babadeluxe-ai-coder.clearContextRoot`                  | Clear context root folder |
-| `babadeluxe-ai-coder.git.generateCommitMessage`         | Generate commit message   |
-| `babadeluxe-ai-coder.openSettings`                      | Open extension settings   |
-| `babadeluxe-ai-coder.setContextRoot`                    | Set context root folder   |
-| `babadeluxe-ai-coder.showChat`                          | Show chat panel           |
+| Command | Description |
+| :--- | :--- |
+| `babadeluxe-ai-coder.context.addFileToBabaContext` | Add file to context |
+| `babadeluxe-ai-coder.context.addFolderToBabaContext` | Add folder to context |
+| `babadeluxe-ai-coder.context.addSelectionToBabaContext` | Add selection to context |
+| `babadeluxe-ai-coder.clearContextRoot` | Clear context root folder |
+| `babadeluxe-ai-coder.git.generateCommitMessage` | Generate commit message |
+| `babadeluxe-ai-coder.openSettings` | Open extension settings |
+| `babadeluxe-ai-coder.setContextRoot` | Set context root folder |
+| `babadeluxe-ai-coder.showChat` | Show chat panel |
 
 ## Prerequisites
 
@@ -66,21 +78,17 @@ npm install
 
 ### Development
 
-Start the extension in development mode:
-
 ```bash
 npm run watch
 ```
 
 ### Building
 
-Build the extension:
-
 ```bash
 npm run build
 ```
 
-Package the extension for distribution:
+Package for distribution:
 
 ```bash
 npm run package
@@ -88,34 +96,36 @@ npm run package
 
 ## NPM Scripts
 
-| Script                       | Description                                      |
-| :--------------------------- | :----------------------------------------------- |
+| Script | Description |
+| :--- | :--- |
 | `generate:commands-registry` | Generate the commands registry from package.json |
-| `compile`                    | Compile with TypeScript and Vite                 |
-| `build`                      | Build the extension                              |
-| `watch`                      | Build in watch mode for development              |
-| `test`                       | Run tests with Vitest                            |
-| `format`                     | Fix linting issues with XO and Prettier          |
-| `typecheck`                  | Run TypeScript type checking                     |
-| `package`                    | Package the extension with vsce                  |
+| `compile` | Compile with TypeScript and Vite |
+| `build` | Build the extension |
+| `watch` | Build in watch mode for development |
+| `test` | Run tests with Vitest |
+| `format` | Fix linting issues with XO and Prettier |
+| `typecheck` | Run TypeScript type checking |
+| `package` | Package the extension with vsce |
 
 ## Architecture
 
 The extension is built using:
 
-- **reactive-vscode**: For reactive VS Code API integration
-- **Hono**: Lightweight HTTP server for webview communication
-- **@babadeluxe/shared**: Shared types and utilities
-- **@supabase/supabase-js**: Authentication integration
-- **wink-bm25-text-search**: Full-text search for context indexing
-- **stopword**: Text processing for search optimization
+- **reactive-vscode** — reactive VS Code API integration
+- **Hono** — lightweight HTTP server for webview communication
+- **@babadeluxe/shared** — shared types and utilities
+- **@supabase/supabase-js** — authentication integration
+- **wink-bm25-text-search** — full-text search for auto-context indexing
+- **stopword** — text processing for search optimization
 
 ### Project Structure
 
-- `src/commands/` - VS Code command implementations
-- `src/webview/` - Webview communication and server
-- `src/context/` - Context management logic
-- `src/git/` - Git integration features
+| Directory | Purpose |
+| :--- | :--- |
+| `src/commands/` | VS Code command implementations |
+| `src/webview/` | Webview communication and Hono server |
+| `src/context/` | Auto-context BM25 pipeline and BabaContext™ management |
+| `src/git/` | Git integration and commit message generation |
 
 ## License
 
