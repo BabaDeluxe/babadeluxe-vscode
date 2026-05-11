@@ -1,4 +1,4 @@
-import { BaseError } from '@babadeluxe/shared/utils'
+import { BaseError } from '@babadeluxe/shared'
 
 export type DetectedApiKey = {
   readonly provider: string

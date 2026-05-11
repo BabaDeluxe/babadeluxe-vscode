@@ -19,27 +19,30 @@ export async function detectAiApiKeys(): Promise<Result<DetectorResult, Detectio
       // Check User (Global)
       if (typeof info?.globalValue === 'string' && info.globalValue.trim().length > 0) {
         detected.push({
-          provider: key.split('.')[0] || 'unknown',
+          provider: key.split('.')[0] ?? 'unknown',
           key: info.globalValue.trim(),
-          source: 'user-settings'
+          source: 'user-settings',
         })
       }
 
       // Check Workspace
       if (typeof info?.workspaceValue === 'string' && info.workspaceValue.trim().length > 0) {
         detected.push({
-          provider: key.split('.')[0] || 'unknown',
+          provider: key.split('.')[0] ?? 'unknown',
           key: info.workspaceValue.trim(),
-          source: 'workspace-settings'
+          source: 'workspace-settings',
         })
       }
 
       // Check Workspace Folder (.vscode/settings.json equivalent via API)
-      if (typeof info?.workspaceFolderValue === 'string' && info.workspaceFolderValue.trim().length > 0) {
+      if (
+        typeof info?.workspaceFolderValue === 'string' &&
+        info.workspaceFolderValue.trim().length > 0
+      ) {
         detected.push({
-          provider: key.split('.')[0] || 'unknown',
+          provider: key.split('.')[0] ?? 'unknown',
           key: info.workspaceFolderValue.trim(),
-          source: 'dot-vscode-settings'
+          source: 'dot-vscode-settings',
         })
       }
     }
@@ -54,26 +57,28 @@ export async function detectAiApiKeys(): Promise<Result<DetectorResult, Detectio
           const content = Buffer.from(bytes).toString('utf8')
           const json = JSON.parse(content) as Record<string, unknown>
 
-          for (const [key, value] of Object.entries(json)) {
-            if (typeof value === 'string' && isAiKeyHeuristic(key, value)) {
-              // Only add if not already detected from known keys
+          for (const [settingKey, value] of Object.entries(json)) {
+            if (typeof value === 'string' && isAiKeyHeuristic(settingKey, value)) {
               const trimmedValue = value.trim()
-              if (!detected.some(d => d.key === trimmedValue)) {
+              if (!detected.some((d) => d.key === trimmedValue)) {
                 detected.push({
-                  provider: inferProvider(key),
+                  provider: inferProvider(settingKey),
                   key: trimmedValue,
-                  source: 'dot-vscode-settings'
+                  source: 'dot-vscode-settings',
                 })
               }
             }
           }
-        } catch {
-          // File might not exist or be invalid JSON, ignore
+        } catch (e) {
+          logger.debug(
+            `[detector] Could not read or parse ${settingsUri.fsPath} — skipping:`,
+            e instanceof Error ? e.message : String(e)
+          )
         }
       }
     }
 
-    // 3. Deduplicate by provider (take the first one found per provider as requested)
+    // 3. Deduplicate by provider (take the first one found per provider)
     const uniqueByProvider = new Map<string, DetectedApiKey>()
     for (const d of detected) {
       if (!uniqueByProvider.has(d.provider)) {
@@ -101,7 +106,10 @@ function inferProvider(key: string): string {
   const parts = key.split('.')
   if (parts.length > 1) return parts[0]!
 
-  const knownProviders = ['openai', 'anthropic', 'claude', 'gemini', 'google', 'mistral', 'groq', 'together', 'perplexity', 'openrouter']
+  const knownProviders = [
+    'openai', 'anthropic', 'claude', 'gemini', 'google',
+    'mistral', 'groq', 'together', 'perplexity', 'openrouter',
+  ]
   const lowerKey = key.toLowerCase()
   for (const p of knownProviders) {
     if (lowerKey.includes(p)) return p

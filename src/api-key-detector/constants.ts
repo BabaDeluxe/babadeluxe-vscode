@@ -31,4 +31,8 @@ export const KNOWN_SETTING_KEYS = [
   'openrouter.apiKey',
 ] as const
 
-export const API_KEY_REGEX = /^(sk-[a-zA-Z0-9]{20,}|AIza[a-zA-Z0-9_-]{35}|[a-f0-9]{32,}|[A-Z0-9]{20,})$/
+// Matches well-known AI key prefixes only — avoids false positives from hex hashes, UUIDs, git SHAs.
+// Covers: OpenAI (sk-...), Anthropic (sk-ant-...), Google AI (AIza...), Groq (gsk_...),
+// OpenRouter (sk-or-...) and generic long alphanumeric tokens (min 32 chars, mixed case).
+export const API_KEY_REGEX =
+  /^(sk-(?:ant-|or-)?[a-zA-Z0-9_-]{20,}|AIza[a-zA-Z0-9_-]{35}|gsk_[a-zA-Z0-9]{20,}|[a-zA-Z][a-zA-Z0-9_-]{31,}[a-zA-Z0-9])$/
