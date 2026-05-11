@@ -59,7 +59,7 @@ export class AddFolderToContextCommand implements ExtensionCommand {
     if (scanResult.isErr()) {
       logger.error('[command] Folder scan failed:', scanResult.error)
       void vscodeApi.window.showErrorMessage('Failed to scan folder.')
-      voidvoid gb.track('add-folder-scan-failed', { error: scanResult.error.message })
+      void gb.track('add-folder-scan-failed', { error: scanResult.error.message })
       return
     }
 
@@ -68,7 +68,7 @@ export class AddFolderToContextCommand implements ExtensionCommand {
 
     if (scan.fileUris.length === 0) {
       void vscodeApi.window.showInformationMessage('No indexable files found in folder.')
-      voidvoid gb.track('add-folder-empty', { folderPath: effectiveFolderUri.fsPath })
+      void gb.track('add-folder-empty', { folderPath: effectiveFolderUri.fsPath })
       return
     }
 
@@ -80,7 +80,7 @@ export class AddFolderToContextCommand implements ExtensionCommand {
         'Cancel'
       )
       if (choice !== 'Pin folder') {
-        voidvoid gb.track('add-folder-cancelled-depth', { depth: scan.maxDepth })
+        void gb.track('add-folder-cancelled-depth', { depth: scan.maxDepth })
         return
       }
     }
@@ -93,7 +93,7 @@ export class AddFolderToContextCommand implements ExtensionCommand {
         'Cancel'
       )
       if (choice !== `Pin ${maxFolderPinFiles}`) {
-        voidvoid gb.track('add-folder-cancelled-capped', { count: scan.fileUris.length })
+        void gb.track('add-folder-cancelled-capped', { count: scan.fileUris.length })
         return
       }
     }
@@ -122,9 +122,9 @@ export class AddFolderToContextCommand implements ExtensionCommand {
     await Promise.race([queue.onIdle()])
     await Promise.allSettled(taskPromises)
 
-    voidvoid gb.track('add-folder-success', {
+    void gb.track('add-folder-success', {
       folderPath: effectiveFolderUri.fsPath,
-      fileCount: fileUris.length
+      fileCount: fileUris.length,
     })
 
     logger.log('[command] Pinned', fileUris.length, 'files from folder')
