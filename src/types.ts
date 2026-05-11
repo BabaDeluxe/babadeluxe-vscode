@@ -143,6 +143,11 @@ export type NavigateToMessage = Readonly<{
   payload: { view: string }
 }>
 
+export type ImportAiKeysMessage = Readonly<{
+  type: 'import-ai-keys'
+  payload: Array<{ provider: string; key: string }>
+}>
+
 export type WebviewMessage =
   | Readonly<{ type: 'sidebar.ready' }>
   | Readonly<{ type: 'contextRoot.getCurrent' }>
@@ -156,6 +161,7 @@ export type WebviewMessage =
   | NavigateToMessage
   | ContextUnpinFileMessage
   | ContextClearAllMessage
+  | ImportAiKeysMessage
 
 export type WebviewCommonApi = {
   postContextRoot: (webview: vscode.Webview) => void
