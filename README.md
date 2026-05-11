@@ -7,14 +7,18 @@
   <img src="https://img.shields.io/badge/node-%3E%3D20-b06ab3?style=flat-rounded" alt="node version">
 </p>
 
-> **The VS Code extension for the BabaDeluxe AI Coder.** Provides an AI-powered coding assistant directly within your IDE, featuring intelligent context management, Git integration, and seamless communication with the babadeluxe-webview.
+> **The VS Code extension for the BabaDeluxe AI Coder.** Brings intelligent context management, Git integration, and a full chat interface directly into your IDE.
+
+<!-- TODO: replace with actual screenshot once recorded -->
+<!-- ![BabaDeluxe extension screenshot](assets/screenshot.png) -->
 
 ## Overview
 
-This extension brings the power of the BabaDeluxe AI Coder into Visual Studio Code. It serves as the bridge between your IDE and the AI backend, providing:
+This extension connects Visual Studio Code to the BabaDeluxe AI backend, providing:
 
 - **Intelligent Context Management**: Add files, folders, and code selections to the AI context with a single click.
-- **Git Integration**: Generate commit messages automatically based on your staged changes.
+- **Git Integration**: Generate commit messages automatically from staged changes.
+- **API Key Import**: Detects AI API keys already present in your VS Code settings and offers to import them on first launch — no manual copy-paste.
 - **Deep Webview Integration**: Embed the full-featured chat interface directly in VS Code's activity bar.
 - **Native IDE Experience**: Full support for commands, context menus, and keyboard shortcuts.
 
@@ -39,6 +43,10 @@ For precise control, pin any file, folder, or selection to the context explicitl
 - **Add Code to BabaContext™**: Add selected code snippets directly from the editor.
 - **Set Context Root**: Define the root folder for auto-context search scope.
 - **Clear Context Root**: Reset the context root folder.
+
+### API Key Detection
+
+On first launch, the extension scans your VS Code user settings, workspace settings, and `.vscode/settings.json` for AI API keys from known providers (OpenAI, Anthropic, Groq, Mistral, and more). If any are found, you get a one-click prompt to import them into BabaDeluxe — no manual copy-paste required.
 
 ### Git Integration
 
@@ -66,32 +74,32 @@ For precise control, pin any file, folder, or selection to the context explicitl
 
 - **VS Code**: >= 1.104.0
 - **Node.js**: >= 20.19.0
-- **npm**: >= 10.8.0
+- **pnpm**: >= 9
 
 ## Installation & Development
 
 ### Installation
 
 ```bash
-npm install
+pnpm install
 ```
 
 ### Development
 
 ```bash
-npm run watch
+pnpm run watch
 ```
 
 ### Building
 
 ```bash
-npm run build
+pnpm run build
 ```
 
 Package for distribution:
 
 ```bash
-npm run package
+pnpm run package
 ```
 
 ## NPM Scripts
@@ -126,6 +134,7 @@ The extension is built using:
 | `src/webview/` | Webview communication and Hono server |
 | `src/context/` | Auto-context BM25 pipeline and BabaContext™ management |
 | `src/git/` | Git integration and commit message generation |
+| `src/api-key-detector/` | Startup API key detection and import flow |
 
 ## License
 
@@ -133,4 +142,4 @@ This project is licensed under the **European Union Public License 1.2 (EUPL-1.2
 
 ---
 
-**BabaDeluxe** — _Redefining the Future of Software Development._
+**BabaDeluxe** — _AI coding tools built for developers who care about craft._
