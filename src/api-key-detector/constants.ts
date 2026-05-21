@@ -35,4 +35,4 @@ export const KNOWN_SETTING_KEYS = [
 // Covers: OpenAI (sk-...), Anthropic (sk-ant-...), Google AI (AIza...), Groq (gsk_...),
 // OpenRouter (sk-or-...) and generic long alphanumeric tokens (min 32 chars, mixed case).
 export const API_KEY_REGEX =
-  /^(sk-(?:ant-|or-)?[a-zA-Z0-9_-]{20,}|AIza[a-zA-Z0-9_-]{35}|gsk_[a-zA-Z0-9]{20,}|[a-zA-Z][a-zA-Z0-9_-]{31,}[a-zA-Z0-9])$/
+  /^(sk-(?:ant-|or-)?[\w-]{20,}|AIza[\w-]{35}|gsk_[a-zA-Z\d]{20,}|[a-zA-Z][\w-]{31,}[a-zA-Z\d])$/

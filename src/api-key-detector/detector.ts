@@ -1,8 +1,8 @@
 import * as vscode from 'vscode'
 import { ok, err, type Result } from 'neverthrow'
+import { logger } from '../logger.js'
 import { KNOWN_SETTING_KEYS, API_KEY_REGEX } from './constants.js'
 import { type DetectedApiKey, type DetectorResult, DetectionError } from './types.js'
-import { logger } from '../logger.js'
 
 /**
  * Detects AI API keys from VS Code User settings, Workspace settings, and .vscode/settings.json.
@@ -48,7 +48,7 @@ export async function detectAiApiKeys(): Promise<Result<DetectorResult, Detectio
     }
 
     // 2. Heuristic: Scan .vscode/settings.json manually for unknown keys
-    const workspaceFolders = vscode.workspace.workspaceFolders
+    const { workspaceFolders } = vscode.workspace
     if (workspaceFolders) {
       for (const folder of workspaceFolders) {
         const settingsUri = vscode.Uri.joinPath(folder.uri, '.vscode', 'settings.json')
@@ -69,10 +69,10 @@ export async function detectAiApiKeys(): Promise<Result<DetectorResult, Detectio
               }
             }
           }
-        } catch (e) {
+        } catch (error) {
           logger.debug(
             `[detector] Could not read or parse ${settingsUri.fsPath} — skipping:`,
-            e instanceof Error ? e.message : String(e)
+            error instanceof Error ? error.message : String(error)
           )
         }
       }
@@ -86,12 +86,12 @@ export async function detectAiApiKeys(): Promise<Result<DetectorResult, Detectio
       }
     }
 
-    const finalResult = Array.from(uniqueByProvider.values())
+    const finalResult = [...uniqueByProvider.values()]
     logger.log(`[detector] Detected ${finalResult.length} unique AI providers with API keys`)
 
     return ok(finalResult)
-  } catch (e) {
-    return err(new DetectionError('Failed to detect API keys', e))
+  } catch (error) {
+    return err(new DetectionError('Failed to detect API keys', error))
   }
 }
 
@@ -107,8 +107,16 @@ function inferProvider(key: string): string {
   if (parts.length > 1) return parts[0]!
 
   const knownProviders = [
-    'openai', 'anthropic', 'claude', 'gemini', 'google',
-    'mistral', 'groq', 'together', 'perplexity', 'openrouter',
+    'openai',
+    'anthropic',
+    'claude',
+    'gemini',
+    'google',
+    'mistral',
+    'groq',
+    'together',
+    'perplexity',
+    'openrouter',
   ]
   const lowerKey = key.toLowerCase()
   for (const p of knownProviders) {

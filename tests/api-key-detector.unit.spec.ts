@@ -1,7 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import * as vscode from 'vscode'
 import { detectAiApiKeys } from '../src/api-key-detector/detector.js'
-import { KNOWN_SETTING_KEYS } from '../src/api-key-detector/constants.js'
 
 vi.mock('vscode', () => {
   const mockConfig = {
@@ -41,6 +40,7 @@ describe('api-key-detector', () => {
       if (key === 'continue.models') {
         return { globalValue: 'sk-1234567890abcdef1234567890abcdef' }
       }
+
       return undefined
     })
 
@@ -57,9 +57,7 @@ describe('api-key-detector', () => {
 
   it('detects unknown keys from .vscode/settings.json via heuristic', async () => {
     const mockFs = vscode.workspace.fs
-    ;(vscode.workspace as any).workspaceFolders = [
-      { uri: { fsPath: '/mock/workspace' } }
-    ]
+    ;(vscode.workspace as any).workspaceFolders = [{ uri: { fsPath: '/mock/workspace' } }]
 
     const mockSettings = JSON.stringify({
       'some.custom.openai_api_key': 'sk-openai-key-123',
@@ -83,12 +81,10 @@ describe('api-key-detector', () => {
       if (key === 'openai.apiKey') {
         return { globalValue: 'sk-user-key' }
       }
+
       return undefined
     })
-
-    ;(vscode.workspace as any).workspaceFolders = [
-      { uri: { fsPath: '/mock/workspace' } }
-    ]
+    ;(vscode.workspace as any).workspaceFolders = [{ uri: { fsPath: '/mock/workspace' } }]
     const mockSettings = JSON.stringify({
       'openai.apiKey': 'sk-workspace-key',
     })
@@ -100,8 +96,8 @@ describe('api-key-detector', () => {
 
     // Should only have 1 'openai' key, even if found in two places
     expect(detected).toHaveLength(1)
-    expect(detected[0].provider).toBe('openai')
-    expect(detected[0].key).toBe('sk-user-key') // User settings checked first
+    expect(detected[0]?.provider).toBe('openai')
+    expect(detected[0]?.key).toBe('sk-user-key') // User settings checked first
   })
 
   it('handles errors during detection gracefully', async () => {

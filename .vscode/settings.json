@@ -27,7 +27,7 @@
         "editor.formatOnSave": false,
     },
     "[typescript]": {
-        "editor.defaultFormatter": "vscode.typescript-language-features",
+        "editor.defaultFormatter": "samverschueren.linter-xo",
         "editor.formatOnSave": false,
     },
     "[javascriptreact]": {
@@ -48,5 +48,6 @@
         "editor.suggest.insertMode": "replace",
         "editor.defaultFormatter": "vscode.json-language-features",
     },
-    "js/ts.tsdk.path": "node_modules\\typescript\\lib"
+    "js/ts.tsdk.path": "node_modules\\typescript\\lib",
+    "biome.enable": false
 }

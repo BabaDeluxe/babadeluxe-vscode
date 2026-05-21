@@ -6,6 +6,6 @@ export type DetectedApiKey = {
   readonly source: 'user-settings' | 'workspace-settings' | 'dot-vscode-settings'
 }
 
-export type DetectorResult = ReadonlyArray<DetectedApiKey>
+export type DetectorResult = readonly DetectedApiKey[]
 
 export class DetectionError extends BaseError {}
