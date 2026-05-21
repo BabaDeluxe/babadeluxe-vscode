@@ -41,18 +41,14 @@ while IFS= read -r -d '' file; do
   fi
 done <"$staged_list"
 
-if [[ "$has_non_submodule_files" != true ]]; then
-  echo "[pre-commit] only git submodule paths staged, skipping"
-  exit 0
-fi
-
 if [[ "$has_typeable_files" == true ]]; then
   echo "[pre-commit] running type-check..."
-  pnpm type-check || {
+  pnpm exec concurrently "pnpm type-check" "pnpm format" || {
     echo "[pre-commit] ABORT: type-check failed — fix type errors before committing"
     exit 1
   }
   echo "[pre-commit] type-check passed"
+  exit 0
 else
   echo "[pre-commit] no type-check-triggering files staged, skipping type-check"
 fi
