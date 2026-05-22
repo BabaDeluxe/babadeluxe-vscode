@@ -1,0 +1,67 @@
+skip_clone: true
+
+variables:
+  - &release_image node:20-alpine
+
+  - &release_commands
+    - apk add --no-cache git openssh-client bash curl
+    - npm install -g pnpm@9.15.0 corepack
+    - corepack enable
+
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - echo "$GH_SSH_KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
+    - ssh-keyscan github.com >> ~/.ssh/known_hosts
+
+    - clone_with_fallbacks() {
+        local slug="$1" path="$2" branch="$3";
+
+        echo "DEPLOY_VARIANT=primary-gh";
+        if GH_TOKEN="$GH_TOKEN" git clone "https://x-access-token:${GH_TOKEN}@github.com/${slug}.git" "$path" -b "$branch"; then return 0; fi;
+        echo "DEPLOY_VARIANT_FAILED=primary-gh";
+
+        echo "DEPLOY_VARIANT=fallback-ssh";
+        if git clone "git@github.com:${slug}.git" "$path" -b "$branch"; then return 0; fi;
+        echo "DEPLOY_VARIANT_FAILED=fallback-ssh";
+
+        echo "DEPLOY_VARIANT=fallback-plain-git-clone";
+        if git clone "https://${GH_TOKEN}@github.com/${slug}.git" "$path" -b "$branch"; then return 0; fi;
+        echo "DEPLOY_VARIANT_FAILED=fallback-plain-git-clone";
+
+        echo "DEPLOY_CLONE_ERROR=all variants exhausted for $slug";
+        return 1;
+      }
+
+    - clone_with_fallbacks "$REPO_SLUG" "$REPO_DIR" "$REPO_BRANCH"
+    - cd "$REPO_DIR"
+
+    - git config user.email "ci@babadeluxe.com"
+    - git config user.name "BabaDeluxe CI"
+    - git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO_SLUG}.git"
+
+    - pnpm install --frozen-lockfile
+    - pnpm build
+    - pnpm test --run
+
+    - VSCE_PAT="$VSCE_PAT" GH_TOKEN="$GH_TOKEN" pnpm release
+
+  - &base_env
+    REPO_SLUG: BabaDeluxe/babadeluxe-vscode
+    PNPM_VERSION: 9.15.0
+    GH_TOKEN:
+      from_secret: gh_token
+    GH_SSH_KEY:
+      from_secret: deploy_ssh_key
+    VSCE_PAT:
+      from_secret: vsce_pat
+
+steps:
+  release:
+    image: *release_image
+    when:
+      - event: [push, manual]
+        branch: master
+    environment:
+      <<: *base_env
+      REPO_BRANCH: master
+      REPO_DIR: /tmp/babadeluxe-vscode
+    commands: *release_commands
