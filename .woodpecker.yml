@@ -17,11 +17,11 @@ variables:
       [ -n "$REPO_BRANCH" ] || { echo "FAIL: REPO_BRANCH is not set"; exit 1; }
       [ -n "$REPO_SLUG" ]   || { echo "FAIL: REPO_SLUG is not set"; exit 1; }
       [ -n "$REPO_DIR" ]    || { echo "FAIL: REPO_DIR is not set"; exit 1; }
-    - GIT_TERMINAL_PROMPT=0 git clone --no-recurse-submodules "https://x-access-token:${GH_TOKEN}@github.com/${REPO_SLUG}.git" "$REPO_DIR" -b "$REPO_BRANCH"
+    - GIT_TERMINAL_PROMPT=0 git clone --no-recurse-submodules "https://x-access-token:$GH_TOKEN@github.com/$REPO_SLUG.git" "$REPO_DIR" -b "$REPO_BRANCH"
     - cd "$REPO_DIR"
     - git config user.email "ci@babadeluxe.com"
     - git config user.name "BabaDeluxe CI"
-    - git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO_SLUG}.git"
+    - git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/$REPO_SLUG.git"
     - pnpm install --frozen-lockfile
     - pnpm build
     - pnpm test --run
