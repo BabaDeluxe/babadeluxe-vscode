@@ -35,6 +35,7 @@ variables:
         git remote set-url origin "https://github.com/$REPO_SLUG.git"
       rm -f "$GIT_ASKPASS_FILE"
     - pnpm install --frozen-lockfile
+    - pnpm type-check
     - pnpm build
     - pnpm test --run
     - VSCE_PAT="$VSCE_PAT" GH_TOKEN="$GH_TOKEN" pnpm release
