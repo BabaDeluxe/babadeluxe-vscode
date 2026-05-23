@@ -17,11 +17,23 @@ variables:
       [ -n "$REPO_BRANCH" ] || { echo "FAIL: REPO_BRANCH is not set"; exit 1; }
       [ -n "$REPO_SLUG" ]   || { echo "FAIL: REPO_SLUG is not set"; exit 1; }
       [ -n "$REPO_DIR" ]    || { echo "FAIL: REPO_DIR is not set"; exit 1; }
-    - GIT_TERMINAL_PROMPT=0 git clone --no-recurse-submodules "https://x-access-token:$GH_TOKEN@github.com/$REPO_SLUG.git" "$REPO_DIR" -b "$REPO_BRANCH"
+    - |
+      GIT_ASKPASS_FILE=$(mktemp)
+      printf '#!/bin/sh\necho "%s"\n' "$GH_TOKEN" > "$GIT_ASKPASS_FILE"
+      chmod +x "$GIT_ASKPASS_FILE"
+      GIT_TERMINAL_PROMPT=0 GIT_ASKPASS="$GIT_ASKPASS_FILE" GIT_USERNAME="x-access-token" \
+        git clone --no-recurse-submodules "https://github.com/$REPO_SLUG.git" "$REPO_DIR" -b "$REPO_BRANCH"
+      rm -f "$GIT_ASKPASS_FILE"
     - cd "$REPO_DIR"
     - git config user.email "ci@babadeluxe.com"
     - git config user.name "BabaDeluxe CI"
-    - git remote set-url origin "https://x-access-token:$GH_TOKEN@github.com/$REPO_SLUG.git"
+    - |
+      GIT_ASKPASS_FILE=$(mktemp)
+      printf '#!/bin/sh\necho "%s"\n' "$GH_TOKEN" > "$GIT_ASKPASS_FILE"
+      chmod +x "$GIT_ASKPASS_FILE"
+      GIT_ASKPASS="$GIT_ASKPASS_FILE" GIT_USERNAME="x-access-token" \
+        git remote set-url origin "https://github.com/$REPO_SLUG.git"
+      rm -f "$GIT_ASKPASS_FILE"
     - pnpm install --frozen-lockfile
     - pnpm build
     - pnpm test --run
