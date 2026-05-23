@@ -12,26 +12,18 @@ variables:
     - echo "$GH_SSH_KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
     - ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-    - clone_with_fallbacks() {
-        local slug="$1" path="$2" branch="$3";
+    - |
+      [ -n "$GH_TOKEN" ]    || { echo "FAIL: GH_TOKEN is not set (secret gh_token missing or empty)"; exit 1; }
+      [ -n "$VSCE_PAT" ]    || { echo "FAIL: VSCE_PAT is not set (secret vsce_pat missing or empty)"; exit 1; }
+      [ -n "$GH_SSH_KEY" ]  || { echo "FAIL: GH_SSH_KEY is not set (secret deploy_ssh_key missing or empty)"; exit 1; }
+      [ -n "$REPO_BRANCH" ] || { echo "FAIL: REPO_BRANCH is not set"; exit 1; }
+      [ -n "$REPO_SLUG" ]   || { echo "FAIL: REPO_SLUG is not set"; exit 1; }
+      [ -n "$REPO_DIR" ]    || { echo "FAIL: REPO_DIR is not set"; exit 1; }
 
-        echo "DEPLOY_VARIANT=primary-gh";
-        if GH_TOKEN="$GH_TOKEN" git clone "https://x-access-token:${GH_TOKEN}@github.com/${slug}.git" "$path" -b "$branch"; then return 0; fi;
-        echo "DEPLOY_VARIANT_FAILED=primary-gh";
-
-        echo "DEPLOY_VARIANT=fallback-ssh";
-        if git clone "git@github.com:${slug}.git" "$path" -b "$branch"; then return 0; fi;
-        echo "DEPLOY_VARIANT_FAILED=fallback-ssh";
-
-        echo "DEPLOY_VARIANT=fallback-plain-git-clone";
-        if git clone "https://${GH_TOKEN}@github.com/${slug}.git" "$path" -b "$branch"; then return 0; fi;
-        echo "DEPLOY_VARIANT_FAILED=fallback-plain-git-clone";
-
-        echo "DEPLOY_CLONE_ERROR=all variants exhausted for $slug";
-        return 1;
-      }
-
-    - clone_with_fallbacks "$REPO_SLUG" "$REPO_DIR" "$REPO_BRANCH"
+    - GIT_TERMINAL_PROMPT=0
+        git clone --no-recurse-submodules
+          "https://x-access-token:${GH_TOKEN}@github.com/${REPO_SLUG}.git"
+          "$REPO_DIR" -b "$REPO_BRANCH"
     - cd "$REPO_DIR"
 
     - git config user.email "ci@babadeluxe.com"
@@ -64,4 +56,8 @@ steps:
       <<: *base_env
       REPO_BRANCH: master
       REPO_DIR: /tmp/babadeluxe-vscode
+    secrets:
+      - gh_token
+      - deploy_ssh_key
+      - vsce_pat
     commands: *release_commands
