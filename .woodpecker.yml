@@ -7,44 +7,25 @@ variables:
     - apk add --no-cache git openssh-client bash curl
     - npm install -g pnpm@9.15.0 corepack
     - corepack enable
-
     - mkdir -p ~/.ssh && chmod 700 ~/.ssh
     - echo "$GH_SSH_KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
     - ssh-keyscan github.com >> ~/.ssh/known_hosts
-
     - |
-      [ -n "$GH_TOKEN" ]    || { echo "FAIL: GH_TOKEN is not set (secret gh_token missing or empty)"; exit 1; }
-      [ -n "$VSCE_PAT" ]    || { echo "FAIL: VSCE_PAT is not set (secret vsce_pat missing or empty)"; exit 1; }
-      [ -n "$GH_SSH_KEY" ]  || { echo "FAIL: GH_SSH_KEY is not set (secret deploy_ssh_key missing or empty)"; exit 1; }
+      [ -n "$GH_TOKEN" ]    || { echo "FAIL: GH_TOKEN is not set"; exit 1; }
+      [ -n "$VSCE_PAT" ]    || { echo "FAIL: VSCE_PAT is not set"; exit 1; }
+      [ -n "$GH_SSH_KEY" ]  || { echo "FAIL: GH_SSH_KEY is not set"; exit 1; }
       [ -n "$REPO_BRANCH" ] || { echo "FAIL: REPO_BRANCH is not set"; exit 1; }
       [ -n "$REPO_SLUG" ]   || { echo "FAIL: REPO_SLUG is not set"; exit 1; }
       [ -n "$REPO_DIR" ]    || { echo "FAIL: REPO_DIR is not set"; exit 1; }
-
-    - GIT_TERMINAL_PROMPT=0
-        git clone --no-recurse-submodules
-          "https://x-access-token:${GH_TOKEN}@github.com/${REPO_SLUG}.git"
-          "$REPO_DIR" -b "$REPO_BRANCH"
+    - GIT_TERMINAL_PROMPT=0 git clone --no-recurse-submodules "https://x-access-token:${GH_TOKEN}@github.com/${REPO_SLUG}.git" "$REPO_DIR" -b "$REPO_BRANCH"
     - cd "$REPO_DIR"
-
     - git config user.email "ci@babadeluxe.com"
     - git config user.name "BabaDeluxe CI"
     - git remote set-url origin "https://x-access-token:${GH_TOKEN}@github.com/${REPO_SLUG}.git"
-
     - pnpm install --frozen-lockfile
     - pnpm build
     - pnpm test --run
-
     - VSCE_PAT="$VSCE_PAT" GH_TOKEN="$GH_TOKEN" pnpm release
-
-  - &base_env
-    REPO_SLUG: BabaDeluxe/babadeluxe-vscode
-    PNPM_VERSION: 9.15.0
-    GH_TOKEN:
-      from_secret: gh_token
-    GH_SSH_KEY:
-      from_secret: deploy_ssh_key
-    VSCE_PAT:
-      from_secret: vsce_pat
 
 steps:
   release:
@@ -53,11 +34,14 @@ steps:
       - event: [push, manual]
         branch: master
     environment:
-      <<: *base_env
+      GH_TOKEN:
+        from_secret: gh_token
+      GH_SSH_KEY:
+        from_secret: deploy_ssh_key
+      VSCE_PAT:
+        from_secret: vsce_pat
+      REPO_SLUG: BabaDeluxe/babadeluxe-vscode
+      PNPM_VERSION: 9.15.0
       REPO_BRANCH: master
       REPO_DIR: /tmp/babadeluxe-vscode
-    secrets:
-      - gh_token
-      - deploy_ssh_key
-      - vsce_pat
     commands: *release_commands
