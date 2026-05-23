@@ -103,9 +103,6 @@ function isAiKeyHeuristic(key: string, value: string): boolean {
 }
 
 function inferProvider(key: string): string {
-  const parts = key.split('.')
-  if (parts.length > 1) return parts[0]!
-
   const knownProviders = [
     'openai',
     'anthropic',
@@ -118,10 +115,22 @@ function inferProvider(key: string): string {
     'perplexity',
     'openrouter',
   ]
+
   const lowerKey = key.toLowerCase()
+
+  // 1. Prefer explicit provider names anywhere in the full key string
   for (const p of knownProviders) {
-    if (lowerKey.includes(p)) return p
+    if (lowerKey.includes(p)) {
+      return p
+    }
   }
 
+  // 2. Fallback: namespace-like keys (e.g. 'roo-cline.apiKey') — use first segment
+  const parts = key.split('.')
+  if (parts.length > 1) {
+    return parts[0]!
+  }
+
+  // 3. Last resort
   return 'unknown'
 }

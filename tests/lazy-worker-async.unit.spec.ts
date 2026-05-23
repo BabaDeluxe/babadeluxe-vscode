@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { runLazyWorkerAsync } from '../src/utils/lazy-worker-async.js'
+import type { Result } from 'neverthrow'
 
 vi.mock('../src/logger.js', () => ({
   logger: {
@@ -32,14 +33,25 @@ describe('runLazyWorkerAsync', () => {
     }).not.toThrow()
 
     await vi.waitFor(() => {
-      expect(logger.warn).toHaveBeenCalledWith(expect.stringContaining('failing-label'), error)
+      expect(logger.warn).toHaveBeenCalledTimes(1)
+      const [message, loggedError] = (logger.warn as ReturnType<typeof vi.fn>).mock.calls[0] as [
+        string,
+        Error,
+      ]
+      expect(message).toContain('failing-label')
+      // The impl wraps the original error in LazyWorkerError — check message propagation
+      expect(loggedError).toBeInstanceOf(Error)
+      expect(loggedError.message).toContain('boom')
     })
   })
 
-  it('returns void — caller cannot await it', () => {
+  it('returns a Promise<Result> — caller may choose to await it', async () => {
     const work = vi.fn().mockResolvedValue(undefined)
-    const result = runLazyWorkerAsync('void-test', work)
-    expect(result).toBeUndefined()
+    const resultPromise = runLazyWorkerAsync('void-test', work)
+    // The function is async and returns a Promise — not void
+    expect(resultPromise).toBeInstanceOf(Promise)
+    const result = (await resultPromise) as Result<void, Error>
+    expect(result.isOk()).toBe(true)
   })
 
   it('logs the label on start', async () => {
