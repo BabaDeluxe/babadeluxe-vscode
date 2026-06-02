@@ -9,6 +9,8 @@ import { commandRegistry } from './commands/generated-registry.js'
 import { registerLazyCommands } from './commands/register-lazy-commands.js'
 import { runLazyWorkerAsync } from './utils/lazy-worker-async.js'
 import { detectAiApiKeys } from './api-key-detector/detector.js'
+import { registerActiveEditorWatcher } from './active-editor-watcher.js'
+import { registerDiagnosticsWatcher } from './diagnostics-watcher.js'
 
 const CANCELLED_DETECTION_KEY = 'babadeluxe-ai-coder.api-key-detection-cancelled'
 
@@ -66,7 +68,13 @@ const extension = defineExtension((context: vscode.ExtensionContext) => {
     })
   )
 
-  logger.log('[extension] 7. Running AI API Key detection (lazy)')
+  logger.log('[extension] 7. Registering active editor watcher')
+  registerActiveEditorWatcher(context, sidebar)
+
+  logger.log('[extension] 8. Registering diagnostics watcher')
+  registerDiagnosticsWatcher(context, sidebar)
+
+  logger.log('[extension] 9. Running AI API Key detection (lazy)')
   runLazyWorkerAsync('api-key-detection', async () => {
     if (context.globalState.get<boolean>(CANCELLED_DETECTION_KEY)) {
       logger.log('[extension] API key detection was previously cancelled by user, skipping')

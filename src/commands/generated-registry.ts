@@ -57,6 +57,20 @@ export const commandRegistry: readonly LazyCommandEntry[] = [
       return module.AddSelectionToContextCommand
     },
   },
+  // ask-with-selection.ts
+  {
+    manifest: {
+  commandId: 'babadeluxe-ai-coder.context.askWithSelection',
+  title: 'Ask BabaDeluxe about Selection',
+  menus: {
+    'editor/context': [{ when: 'editorHasSelection', group: 'navigation@49' }],
+  },
+},
+    load: async () => {
+      const module = await import('./ask-with-selection.js')
+      return module.AskWithSelectionCommand
+    },
+  },
   // clear-context-root.ts
   {
     manifest: {
@@ -130,4 +144,3 @@ export const commandRegistry: readonly LazyCommandEntry[] = [
     },
   },
 ]
-
