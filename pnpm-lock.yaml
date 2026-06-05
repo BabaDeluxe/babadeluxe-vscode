@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@babadeluxe/shared':
-        specifier: ^0.20.8
-        version: 0.20.8(socket.io@4.8.3)(typescript@5.9.3)
+        specifier: ^0.24.0
+        version: 0.24.0(socket.io@4.8.3)(typescript@5.9.3)
       '@supabase/supabase-js':
         specifier: ^2.91.0
         version: 2.103.0
@@ -191,8 +191,8 @@ packages:
     resolution: {integrity: sha512-DoeSJ9U5KPAIZoHsPywvfEj2MhBniQe0+FSpjLUTdWoIkI999GB5USkW6nNEHnIaLVxROHXvprWA1KzdS1VQ4A==}
     engines: {node: '>=20'}
 
-  '@babadeluxe/shared@0.20.8':
-    resolution: {integrity: sha512-A7xbpoeVFHR597IUPYo9HvEk3s2FBEmLIYaBzBELte2bPtyqzcE8zaZL7SSPwXOvyCHnuAUqYgYR58yMFMONDA==, tarball: http://npflared.simonwaiblinger.workers.dev/@babadeluxe/shared/-/@babadeluxe/shared-0.20.8.tgz}
+  '@babadeluxe/shared@0.24.0':
+    resolution: {integrity: sha512-NxbNfJu0J54FfU9RdoST/25Og9fMmlAdl5e+aIPY2sUTPmyWg/BFc9VIL3bVRIKLZ5irS2XMSQVZJOoqiez9Dw==, tarball: http://npflared.simonwaiblinger.workers.dev/@babadeluxe/shared/-/@babadeluxe/shared-0.24.0.tgz}
 
   '@babadeluxe/xo-config@0.4.17':
     resolution: {integrity: sha512-7VW+wgqG4wlYB66puiEXWLdtShkQ8ujF3jCHti/L/V7z/b8McKnGitXu93Fu5mvbAJHQDEAzDMSOK379QVLJpQ==, tarball: http://npflared.simonwaiblinger.workers.dev/@babadeluxe/xo-config/-/@babadeluxe/xo-config-0.4.17.tgz}
@@ -4885,9 +4885,9 @@ packages:
     resolution: {integrity: sha512-CzhO+pFNo8ajLM2d2IW/R93ipy99LWjtwblvC1RsoSUMZgyLbYFr221TnSNT7GjGdYui6P459mw9JH/g/zW2ug==}
     engines: {node: '>=18'}
 
-  zod-sockets@5.2.0:
-    resolution: {integrity: sha512-QVRvEIcvVsfgnlxvUQn1s00V5LP+/oTlEy0c/wfGVtsymMD3IPIkpc3np0Ialj/Qqd49sqL0zsNlZEXKvFkbCw==}
-    engines: {node: ^20.19.0 || ^22.12.0 || ^24.0.0}
+  zod-sockets@5.3.0:
+    resolution: {integrity: sha512-tsvaKY6gJuBD1v4J0/7s0sTJSvFNLVolezfdMXidWaSfQMTBuAeP1GVgZrmYDPuVKiIGFZgCeB8SO1oACWEQPQ==}
+    engines: {node: ^20.19.0 || ^22.12.0 || ^24.0.0 || ^26.0.0}
     peerDependencies:
       socket.io: ^4.7.4
       typescript: ^5.3.3 || ^6.0.2
@@ -4895,6 +4895,9 @@ packages:
 
   zod@4.3.6:
     resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
+
+  zod@4.4.3:
+    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
 snapshots:
 
@@ -4987,13 +4990,13 @@ snapshots:
       jsonwebtoken: 9.0.3
       uuid: 8.3.2
 
-  '@babadeluxe/shared@0.20.8(socket.io@4.8.3)(typescript@5.9.3)':
+  '@babadeluxe/shared@0.24.0(socket.io@4.8.3)(typescript@5.9.3)':
     dependencies:
       dotenv: 17.4.1
       neverthrow: 8.2.0
       socket.io-client: 4.8.3
-      zod: 4.3.6
-      zod-sockets: 5.2.0(socket.io@4.8.3)(typescript@5.9.3)(zod@4.3.6)
+      zod: 4.4.3
+      zod-sockets: 5.3.0(socket.io@4.8.3)(typescript@5.9.3)(zod@4.4.3)
     transitivePeerDependencies:
       - bufferutil
       - socket.io
@@ -9971,13 +9974,15 @@ snapshots:
 
   yoctocolors@2.1.2: {}
 
-  zod-sockets@5.2.0(socket.io@4.8.3)(typescript@5.9.3)(zod@4.3.6):
+  zod-sockets@5.3.0(socket.io@4.8.3)(typescript@5.9.3)(zod@4.4.3):
     dependencies:
       ansis: 4.2.0
       ramda: 0.32.0
       socket.io: 4.8.3
       typescript: 5.9.3
       yaml: 2.8.3
-      zod: 4.3.6
+      zod: 4.4.3
 
   zod@4.3.6: {}
+
+  zod@4.4.3: {}

@@ -189,7 +189,7 @@
     "xo": "1.2.2"
   },
   "dependencies": {
-    "@babadeluxe/shared": "^0.20.8",
+    "@babadeluxe/shared": "^0.24.0",
     "@supabase/supabase-js": "^2.91.0",
     "@vscode/ripgrep": "^1.17.0",
     "colorino": "^0.19.3",
