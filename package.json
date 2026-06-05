@@ -21,15 +21,15 @@
     "commands": [
       {
         "command": "babadeluxe-ai-coder.context.addFileToBabaContext",
-        "title": "Add File to BabaContext™"
+        "title": "Add File to BabaContext\u2122"
       },
       {
         "command": "babadeluxe-ai-coder.context.addFolderToBabaContext",
-        "title": "Add Folder to BabaContext™"
+        "title": "Add Folder to BabaContext\u2122"
       },
       {
         "command": "babadeluxe-ai-coder.context.addSelectionToBabaContext",
-        "title": "Add Code to BabaContext™"
+        "title": "Add Code to BabaContext\u2122"
       },
       {
         "command": "babadeluxe-ai-coder.clearContextRoot",
@@ -136,7 +136,7 @@
     }
   },
   "scripts": {
-    "prepare": "husky",
+    "prepare": "husky && git submodule update --init --recursive",
     "vscode:prepublish": "pnpm build:full && pnpm run release",
     "generate:commands-registry": "tsx ./scripts/generate-command-registry.ts",
     "compile": "pnpm run generate:commands-registry && tsc -p tsconfig.app.json --noEmit && vite build",
