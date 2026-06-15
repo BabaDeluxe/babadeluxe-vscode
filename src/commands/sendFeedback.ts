@@ -1,9 +1,16 @@
 import * as vscode from 'vscode'
 
-const FEEDBACK_API_URL =
-  (process.env.FEEDBACK_API_URL ?? 'https://babadeluxe.app') + '/api/feedback'
+const baseUrl = process.env.FEEDBACK_API_URL
+const FEEDBACK_API_URL = baseUrl ? `${baseUrl}/api/feedback` : null
 
 export async function sendFeedback(): Promise<void> {
+  if (!FEEDBACK_API_URL) {
+    vscode.window.showWarningMessage(
+      'BabaDeluxe: Feedback is not configured (FEEDBACK_API_URL not set).',
+    )
+    return
+  }
+
   const message = await vscode.window.showInputBox({
     title: 'Send Feedback to BabaDeluxe',
     prompt: 'Bug, idea, or anything on your mind?',
