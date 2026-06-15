@@ -1,7 +1,7 @@
 import * as vscode from 'vscode'
 
 const FEEDBACK_API_URL =
-  (process.env.FEEDBACK_API_URL ?? 'https://babadeluxe.com') + '/api/feedback'
+  (process.env.FEEDBACK_API_URL ?? 'https://babadeluxe.app') + '/api/feedback'
 
 export async function sendFeedback(): Promise<void> {
   const message = await vscode.window.showInputBox({
