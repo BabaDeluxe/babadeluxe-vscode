@@ -21,15 +21,15 @@
     "commands": [
       {
         "command": "babadeluxe-ai-coder.context.addFileToBabaContext",
-        "title": "Add File to BabaContext\u2122"
+        "title": "Add File to BabaContext™"
       },
       {
         "command": "babadeluxe-ai-coder.context.addFolderToBabaContext",
-        "title": "Add Folder to BabaContext\u2122"
+        "title": "Add Folder to BabaContext™"
       },
       {
         "command": "babadeluxe-ai-coder.context.addSelectionToBabaContext",
-        "title": "Add Code to BabaContext\u2122"
+        "title": "Add Code to BabaContext™"
       },
       {
         "command": "babadeluxe-ai-coder.clearContextRoot",
@@ -189,7 +189,6 @@
     "xo": "1.2.2"
   },
   "dependencies": {
-    "@babadeluxe/shared": "^0.24.0",
     "@supabase/supabase-js": "^2.91.0",
     "@vscode/ripgrep": "^1.17.0",
     "colorino": "^0.19.3",
