@@ -4,41 +4,43 @@ variables:
   - &release_image node:20-alpine
 
   - &release_commands
-    - apk add --no-cache git openssh-client bash curl
-    - npm install -g pnpm@9.15.0 corepack
+    - set -euo pipefail
+    - apk add --no-cache git bash curl
+    - |
+      set -euo pipefail
+      [ -n "$GH_TOKEN" ]     || { echo "FAIL: GH_TOKEN is not set";     exit 1; }
+      [ -n "$VSCE_PAT" ]     || { echo "FAIL: VSCE_PAT is not set";     exit 1; }
+      [ -n "$REPO_BRANCH" ]  || { echo "FAIL: REPO_BRANCH is not set";  exit 1; }
+      [ -n "$REPO_SLUG" ]    || { echo "FAIL: REPO_SLUG is not set";    exit 1; }
+      [ -n "$REPO_DIR" ]     || { echo "FAIL: REPO_DIR is not set";     exit 1; }
+      [ -n "$PNPM_VERSION" ] || { echo "FAIL: PNPM_VERSION is not set"; exit 1; }
     - corepack enable
-    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
-    - echo "$GH_SSH_KEY" > ~/.ssh/id_deploy && chmod 600 ~/.ssh/id_deploy
-    - ssh-keyscan github.com >> ~/.ssh/known_hosts
+    - corepack use "pnpm@$PNPM_VERSION"
     - |
-      [ -n "$GH_TOKEN" ]    || { echo "FAIL: GH_TOKEN is not set"; exit 1; }
-      [ -n "$VSCE_PAT" ]    || { echo "FAIL: VSCE_PAT is not set"; exit 1; }
-      [ -n "$GH_SSH_KEY" ]  || { echo "FAIL: GH_SSH_KEY is not set"; exit 1; }
-      [ -n "$REPO_BRANCH" ] || { echo "FAIL: REPO_BRANCH is not set"; exit 1; }
-      [ -n "$REPO_SLUG" ]   || { echo "FAIL: REPO_SLUG is not set"; exit 1; }
-      [ -n "$REPO_DIR" ]    || { echo "FAIL: REPO_DIR is not set"; exit 1; }
-    - |
-      GIT_ASKPASS_FILE=$(mktemp)
-      printf '#!/bin/sh\necho "%s"\n' "$GH_TOKEN" > "$GIT_ASKPASS_FILE"
-      chmod +x "$GIT_ASKPASS_FILE"
-      GIT_TERMINAL_PROMPT=0 GIT_ASKPASS="$GIT_ASKPASS_FILE" GIT_USERNAME="x-access-token" \
+      set -euo pipefail
+      askpass=$(mktemp)
+      printf '#!/bin/sh\necho "%s"\n' "$GH_TOKEN" > "$askpass"
+      chmod +x "$askpass"
+      GIT_TERMINAL_PROMPT=0 GIT_ASKPASS="$askpass" GIT_USERNAME="x-access-token" \
         git clone --no-recurse-submodules "https://github.com/$REPO_SLUG.git" "$REPO_DIR" -b "$REPO_BRANCH"
-      rm -f "$GIT_ASKPASS_FILE"
-    - cd "$REPO_DIR"
-    - git config user.email "ci@babadeluxe.com"
-    - git config user.name "BabaDeluxe CI"
+      rm -f "$askpass"
     - |
-      GIT_ASKPASS_FILE=$(mktemp)
-      printf '#!/bin/sh\necho "%s"\n' "$GH_TOKEN" > "$GIT_ASKPASS_FILE"
-      chmod +x "$GIT_ASKPASS_FILE"
-      GIT_ASKPASS="$GIT_ASKPASS_FILE" GIT_USERNAME="x-access-token" \
+      set -euo pipefail
+      cd "$REPO_DIR"
+      git config --local user.email "ci@babadeluxe.com"
+      git config --local user.name "BabaDeluxe CI"
+      askpass=$(mktemp)
+      printf '#!/bin/sh\necho "%s"\n' "$GH_TOKEN" > "$askpass"
+      chmod +x "$askpass"
+      GIT_ASKPASS="$askpass" GIT_USERNAME="x-access-token" \
         git remote set-url origin "https://github.com/$REPO_SLUG.git"
-      rm -f "$GIT_ASKPASS_FILE"
-    - pnpm install --frozen-lockfile
-    - pnpm type-check
-    - pnpm build
-    - pnpm test --run
-    - VSCE_PAT="$VSCE_PAT" GH_TOKEN="$GH_TOKEN" pnpm release
+      rm -f "$askpass"
+      HUSKY=0 pnpm install --frozen-lockfile
+      pnpm type-check
+      pnpm build
+      pnpm test --run
+      printf 'GH_TOKEN=%s\nVSCE_PAT=%s\n' "$GH_TOKEN" "$VSCE_PAT" > .env
+      pnpm release
 
 steps:
   release:
@@ -49,8 +51,6 @@ steps:
     environment:
       GH_TOKEN:
         from_secret: gh_token
-      GH_SSH_KEY:
-        from_secret: deploy_ssh_key
       VSCE_PAT:
         from_secret: vsce_pat
       REPO_SLUG: BabaDeluxe/babadeluxe-vscode
