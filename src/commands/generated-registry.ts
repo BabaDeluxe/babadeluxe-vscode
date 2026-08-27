@@ -87,6 +87,21 @@ export const commandRegistry: readonly LazyCommandEntry[] = [
       return module.GenerateCommitMessageCommand
     },
   },
+  // generate-pr-message.ts
+  {
+    manifest: {
+  commandId: 'babadeluxe-ai-coder.git.generatePrMessage',
+  title: 'BabaDeluxe: Generate PR Title & Description',
+  icon: '$(sparkle)',
+  menus: {
+    'scm/title': [{ when: 'scmProvider == git', group: 'navigation@11' }],
+  },
+},
+    load: async () => {
+      const module = await import('./generate-pr-message.js')
+      return module.GeneratePrMessageCommand
+    },
+  },
   // open-settings.ts
   {
     manifest: {
@@ -130,4 +145,3 @@ export const commandRegistry: readonly LazyCommandEntry[] = [
     },
   },
 ]
-

@@ -148,6 +148,33 @@ export type ImportAiKeysMessage = Readonly<{
   payload: Array<{ provider: string; key: string }>
 }>
 
+/**
+ * Sent from the extension host to the sidebar webview.
+ * The sidebar should use the provided diff to generate a conventional
+ * commit message and present it to the user (e.g. as a chat message or
+ * by writing it back to the SCM input box via a response message).
+ */
+export type GitGenerateCommitMessageRequestMessage = Readonly<{
+  type: 'git:generateCommitMessage'
+  /** Full staged (or unstaged) diff text, already truncated if necessary. */
+  diff: string
+}>
+
+/**
+ * Sent from the extension host to the sidebar webview.
+ * The sidebar should generate a PR title and description from the provided
+ * context and present them to the user.
+ */
+export type GitGeneratePrMessageRequestMessage = Readonly<{
+  type: 'git:generatePrMessage'
+  baseBranch: string
+  currentBranch: string
+  /** Diff between baseBranch and currentBranch, already truncated if necessary. */
+  diff: string
+  /** One-line subject of each commit on this branch (newest first, max 20). */
+  commitMessages: string[]
+}>
+
 export type WebviewMessage =
   | Readonly<{ type: 'sidebar.ready' }>
   | Readonly<{ type: 'contextRoot.getCurrent' }>
@@ -162,6 +189,8 @@ export type WebviewMessage =
   | ContextUnpinFileMessage
   | ContextClearAllMessage
   | ImportAiKeysMessage
+  | GitGenerateCommitMessageRequestMessage
+  | GitGeneratePrMessageRequestMessage
 
 export type WebviewCommonApi = {
   postContextRoot: (webview: vscode.Webview) => void
